@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VIN OS | Workspace</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/9.1.2/marked.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; background: #050505; color: #e5e5e5; }
+        .scrollbar-hide::-webkit-scrollbar { display: none; }
+        .glass-panel { background: rgba(20, 20, 20, 0.8); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.08); }
+        .msg-user { background: #2563eb; color: white; box-shadow: 0 4px 15px rgba(37, 99, 235, 0.2); }
+        .msg-ai { background: #1a1a1a; border: 1px solid #333; color: #e0e0e0; }
+        .msg-error { background: #450a0a; border: 1px solid #7f1d1d; color: #fca5a5; }
+        .typing-dot { animation: bounce 1.4s infinite ease-in-out both; }
+        @keyframes bounce { 0%, 80%, 100% { transform: scale(0); } 40% { transform: scale(1); } }
+    </style>
+</head>
+<body class="h-screen flex overflow-hidden selection:bg-blue-500/30">
+
+    <div class="w-72 bg-black border-r border-white/10 flex flex-col hidden md:flex z-20">
+        <div class="p-6 border-b border-white/10">
+            <div class="flex items-center gap-3">
+                <div class="w-3 h-3 bg-blue-500 rounded-full shadow-[0_0_15px_rgba(59,130,246,1)] animate-pulse"></div>
+                <h1 class="text-xl font-bold tracking-tight text-white">VIN <span class="text-gray-600">OS</span></h1>
+            </div>
+        </div>
+
+        <div class="p-5 space-y-6">
+            <div>
+                <label class="text-[10px] text-gray-500 uppercase font-bold tracking-widest ml-1">Neural Engine</label>
+                <div class="relative mt-2">
+                    <select id="modelSelect" class="w-full bg-[#111] border border-white/10 text-gray-300 text-sm rounded-lg p-3 appearance-none focus:outline-none focus:border-blue-500 transition-colors cursor-pointer">
+                        <optgroup label="Core Intelligence">
+                            <option value="llama-3.3-70b-versatile">VIN TITAN (Genius)</option>
+                            <option value="llama-3.1-8b-instant">VIN FLASH (Instant)</option>
+                            <option value="mixtral-8x7b-32768">VIN FLUX (Creative)</option>
+                        </optgroup>
+                        <optgroup label="Sensory Modules">
+                            <option value="vision">VIN OCULUS (Vision)</option>
+                            <option value="audio">VIN VOX (Audio)</option>
+                        </optgroup>
+                    </select>
+                    <div class="absolute right-3 top-3.5 pointer-events-none text-gray-500">▼</div>
+                </div>
+            </div>
+
+            <div class="bg-[#111] rounded-xl p-4 border border-white/5 space-y-3">
+                <div class="text-[10px] text-gray-500 uppercase font-bold tracking-widest mb-2">Session Data</div>
+                <div class="flex justify-between text-xs"><span class="text-gray-500">User</span> <span class="text-white font-mono">{{ user }}</span></div>
+                <div class="flex justify-between text-xs"><span class="text-gray-500">Status</span> <span class="text-green-500 flex items-center gap-1">● Online</span></div>
+            </div>
+            
+            <button onclick="clearHistory()" class="w-full text-left px-4 py-3 text-xs font-medium text-red-400 hover:bg-red-500/10 rounded-lg transition-colors flex items-center gap-2">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                Format Memory
+            </button>
+        </div>
+
+        <div class="mt-auto p-5 border-t border-white/10">
+             <a href="/logout" class="flex items-center gap-3 text-sm text-gray-400 hover:text-white transition-colors group">
+                <div class="p-2 rounded-lg bg-white/5 group-hover:bg-white/10 transition-colors">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+                </div>
+                <span>Terminte Session</span>
+            </a>
+        </div>
+    </div>
+
+    <div class="flex-1 flex flex-col relative bg-[#09090b] w-full">
+        
+        <div class="md:hidden p-4 border-b border-white/10 flex justify-between items-center bg-black/50 backdrop-blur-md sticky top-0 z-50">
+            <h1 class="font-bold text-white">VIN OS</h1>
+            <a href="/logout" class="text-xs text-red-400">Logout</a>
+        </div>
+
+        <div id="chatFeed" class="flex-1 overflow-y-auto p-4 md:p-8 space-y-6 pb-40 scrollbar-hide scroll-smooth">
+            <div class="h-full flex flex-col items-center justify-center text-center opacity-50" id="welcomeScreen">
+                <div class="w-16 h-16 bg-gradient-to-tr from-blue-600 to-purple-600 rounded-2xl mb-6 shadow-2xl shadow-blue-900/50 flex items-center justify-center text-2xl">💠</div>
+                <h2 class="text-3xl font-bold text-white mb-2">System Ready</h2>
+                <p class="text-gray-400 max-w-sm">Initialized for {{ user }}. <br>Upload images or audio for analysis.</p>
+            </div>
+        </div>
+
+        <div class="absolute bottom-0 left-0 w-full p-4 md:p-6 bg-gradient-to-t from-black via-black/90 to-transparent z-40">
+            <div class="max-w-4xl mx-auto">
+                
+                <div id="filePreview" class="hidden mb-3 inline-flex items-center gap-3 px-4 py-2 bg-blue-900/20 border border-blue-500/30 rounded-xl backdrop-blur-md">
+                    <div class="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
+                    <span id="fileName" class="text-xs text-blue-300 font-mono truncate max-w-[200px]">file.jpg</span>
+                    <button onclick="clearFile()" class="text-blue-400 hover:text-white ml-2">×</button>
+                </div>
+
+                <div class="glass-panel rounded-2xl p-2 flex items-end gap-2 shadow-2xl shadow-black/50">
+                    
+                    <button onclick="document.getElementById('fileInput').click()" class="p-3.5 text-gray-400 hover:text-white hover:bg-white/10 rounded-xl transition-all active:scale-95" title="Upload Image/Audio">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                    </button>
+                    <input type="file" id="fileInput" class="hidden" onchange="handleFileSelect(this)">
+
+                    <textarea id="userInput" rows="1" class="w-full bg-transparent text-white text-[15px] p-3.5 focus:outline-none resize-none max-h-32 placeholder-gray-600 leading-relaxed" placeholder="Enter command..."></textarea>
+                    
+                    <button onclick="sendMessage()" id="sendBtn" class="p-3.5 bg-blue-600 text-white rounded-xl hover:bg-blue-500 transition-all shadow-lg shadow-blue-900/30 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14M12 5l7 7-7 7"></path></svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let chatHistory = [];
+        let currentFile = null;
+        let isProcessing = false;
+
+        // --- INIT ---
+        window.onload = () => {
+            const saved = localStorage.getItem('vin_history');
+            if (saved) {
+                try {
+                    chatHistory = JSON.parse(saved);
+                    if(chatHistory.length > 0) document.getElementById('welcomeScreen').style.display = 'none';
+                    chatHistory.forEach(msg => appendMessage(msg.role, msg.content, false));
+                } catch(e) { localStorage.removeItem('vin_history'); }
+            }
+        };
+
+        // --- FILE HANDLING ---
+        function handleFileSelect(input) {
+            if (input.files && input.files[0]) {
+                currentFile = input.files[0];
+                document.getElementById('filePreview').classList.remove('hidden');
+                document.getElementById('fileName').innerText = currentFile.name;
+                
+                // Auto Switch
+                const select = document.getElementById('modelSelect');
+                if (currentFile.type.startsWith('image/')) select.value = 'vision';
+                else if (currentFile.type.startsWith('audio/')) select.value = 'audio';
+            }
+        }
+
+        function clearFile() {
+            currentFile = null;
+            document.getElementById('fileInput').value = '';
+            document.getElementById('filePreview').classList.add('hidden');
+        }
+
+        function clearHistory() {
+            if(confirm("Purge all session memory?")) {
+                localStorage.removeItem('vin_history');
+                location.reload();
+            }
+        }
+
+        // --- CORE CHAT LOGIC ---
+        async function sendMessage() {
+            if (isProcessing) return; // Prevent double clicks
+            
+            const input = document.getElementById('userInput');
+            const text = input.value.trim();
+            const model = document.getElementById('modelSelect').value;
+
+            if (!text && !currentFile) return;
+
+            document.getElementById('welcomeScreen').style.display = 'none';
+            isProcessing = true;
+            document.getElementById('sendBtn').disabled = true;
+
+            // 1. Show User Msg
+            appendMessage('user', text || `[Uploaded: ${currentFile.name}]`, true);
+            input.value = '';
+            input.style.height = 'auto'; // Reset height
+            
+            // 2. Show Loading
+            const loadingId = 'load-' + Date.now();
+            appendLoading(loadingId);
+
+            try {
+                let responseText;
+
+                if (currentFile) {
+                    // --- UPLOAD MODE ---
+                    const formData = new FormData();
+                    formData.append('file', currentFile);
+                    if (text) formData.append('prompt', text);
+                    
+                    const endpoint = model === 'audio' ? '/api/audio' : '/api/vision';
+                    
+                    const res = await fetch(endpoint, { method: 'POST', body: formData });
+                    if(!res.ok) throw new Error("Server rejected file");
+                    
+                    const data = await res.json();
+                    responseText = data.response;
+                    clearFile();
+                } else {
+                    // --- TEXT MODE ---
+                    const res = await fetch('/api/chat', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ 
+                            message: text, 
+                            history: chatHistory, 
+                            model: model 
+                        })
+                    });
+                    if(!res.ok) throw new Error("Neural Core Unreachable");
+                    
+                    const data = await res.json();
+                    responseText = data.response;
+                }
+
+                // 3. Success
+                document.getElementById(loadingId).remove();
+                appendMessage('assistant', responseText, true);
+
+            } catch (e) {
+                // 4. Failure
+                document.getElementById(loadingId).remove();
+                appendError(`System Error: ${e.message || "Connection Failed"}`);
+            }
+
+            isProcessing = false;
+            document.getElementById('sendBtn').disabled = false;
+        }
+
+        // --- UI HELPERS ---
+        function appendMessage(role, text, save) {
+            const feed = document.getElementById('chatFeed');
+            const div = document.createElement('div');
+            const isUser = role === 'user';
+            
+            div.className = `flex ${isUser ? 'justify-end' : 'justify-start'} animate-fade-in-up`;
+            div.innerHTML = `
+                <div class="max-w-[85%] md:max-w-[70%] rounded-2xl p-4 text-[15px] leading-relaxed shadow-sm ${isUser ? 'msg-user rounded-br-none' : 'msg-ai rounded-bl-none'}">
+                    ${isUser ? text : marked.parse(text)}
+                </div>
+            `;
+            
+            feed.appendChild(div);
+            scrollToBottom();
+
+            if (save) {
+                chatHistory.push({ role, content: text });
+                if (!currentFile) localStorage.setItem('vin_history', JSON.stringify(chatHistory));
+            }
+        }
+
+        function appendLoading(id) {
+            const feed = document.getElementById('chatFeed');
+            const div = document.createElement('div');
+            div.id = id;
+            div.className = 'flex justify-start';
+            div.innerHTML = `
+                <div class="msg-ai rounded-2xl rounded-bl-none p-4 flex gap-1 items-center h-12">
+                    <div class="w-2 h-2 bg-gray-500 rounded-full typing-dot"></div>
+                    <div class="w-2 h-2 bg-gray-500 rounded-full typing-dot" style="animation-delay: 0.2s"></div>
+                    <div class="w-2 h-2 bg-gray-500 rounded-full typing-dot" style="animation-delay: 0.4s"></div>
+                </div>
+            `;
+            feed.appendChild(div);
+            scrollToBottom();
+        }
+
+        function appendError(msg) {
+            const feed = document.getElementById('chatFeed');
+            const div = document.createElement('div');
+            div.className = 'flex justify-center my-4';
+            div.innerHTML = `<div class="msg-error px-4 py-2 rounded-lg text-xs font-mono shadow-lg">${msg}</div>`;
+            feed.appendChild(div);
+            scrollToBottom();
+        }
+
+        function scrollToBottom() {
+            const feed = document.getElementById('chatFeed');
+            feed.scrollTop = feed.scrollHeight;
+        }
+
+        // Auto-Resize Textarea
+        const tx = document.getElementById("userInput");
+        tx.addEventListener("input", function() {
+            this.style.height = "auto";
+            this.style.height = (this.scrollHeight) + "px";
+        });
+        tx.addEventListener("keydown", function(e) {
+            if(e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+        });
+    </script>
+</body>
+</html>
