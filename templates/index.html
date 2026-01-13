@@ -3,110 +3,225 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VIN CLOUD | OS</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+    <title>VIN OS | Workspace</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/9.1.2/marked.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
     <style>
-        :root { --bg: #09090b; --panel: #18181b; --accent: #00ff80; --text: #e4e4e7; --border: #27272a; }
-        body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; margin: 0; display: flex; height: 100vh; overflow: hidden; }
-        
-        /* SIDEBAR */
-        .sidebar { width: 260px; background: #0f0f11; border-right: 1px solid var(--border); padding: 25px; display: flex; flex-direction: column; justify-content: space-between; }
-        .logo { font-size: 16px; font-weight: 700; color: white; letter-spacing: 1px; margin-bottom: 30px; display: flex; align-items: center; gap: 10px; }
-        .dot { width: 8px; height: 8px; background: var(--accent); border-radius: 50%; box-shadow: 0 0 10px var(--accent); }
-        
-        /* DROPDOWN */
-        select { width: 100%; background: var(--panel); border: 1px solid var(--border); color: white; padding: 12px; border-radius: 8px; margin-bottom: 20px; cursor: pointer; outline: none; }
-        
-        /* MAIN CHAT */
-        .main { flex: 1; display: flex; flex-direction: column; position: relative; }
-        .chat-area { flex: 1; padding: 40px; overflow-y: auto; display: flex; flex-direction: column; gap: 20px; max-width: 900px; margin: 0 auto; width: 100%; }
-        
-        .msg { display: flex; gap: 15px; line-height: 1.6; animation: fade 0.3s ease; }
-        .avatar { width: 30px; height: 30px; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-weight: bold; flex-shrink: 0; }
-        .user-av { background: white; color: black; }
-        .ai-av { background: var(--panel); border: 1px solid var(--border); color: var(--accent); }
-        .content { margin-top: 4px; }
-        
-        /* INPUT */
-        .input-zone { padding: 30px; display: flex; justify-content: center; background: var(--bg); }
-        .bar { width: 100%; max-width: 900px; background: var(--panel); border: 1px solid var(--border); border-radius: 12px; display: flex; padding: 5px; }
-        input { flex: 1; background: transparent; border: none; color: white; padding: 15px; font-size: 16px; outline: none; }
-        button { background: var(--accent); color: black; border: none; padding: 0 25px; border-radius: 8px; font-weight: bold; cursor: pointer; transition: 0.2s; }
-        button:hover { opacity: 0.8; }
-        
-        .logout { color: #666; text-decoration: none; font-size: 14px; transition: 0.2s; }
-        .logout:hover { color: white; }
-        @keyframes fade { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        body { font-family: 'Inter', sans-serif; background: #050505; color: #e5e5e5; }
+        .scrollbar-hide::-webkit-scrollbar { display: none; }
+        .glass-panel { background: rgba(20, 20, 20, 0.6); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.08); }
+        .msg-user { background: #2563eb; color: white; }
+        .msg-ai { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); }
+        .upload-active { border-color: #3b82f6; background: rgba(59, 130, 246, 0.1); }
     </style>
 </head>
-<body>
-    <div class="sidebar">
-        <div>
-            <div class="logo"><div class="dot"></div> VIN CLOUD OS</div>
-            <select id="model">
-                <option value="llama-3.3-70b-versatile">Llama 3.3 (Genius)</option>
-                <option value="llama-3.1-8b-instant">Llama 3.1 (Fast)</option>
-                <option value="mixtral-8x7b-32768">Mixtral (Creative)</option>
-            </select>
-        </div>
-        <a href="/logout" class="logout">← Log Out</a>
-    </div>
+<body class="h-screen flex overflow-hidden">
 
-    <div class="main">
-        <div class="chat-area" id="chat">
-            <div class="msg">
-                <div class="avatar ai-av">V</div>
-                <div class="content">Secure Connection Established. Welcome, {{ user }}.</div>
+    <div class="w-72 bg-black border-r border-white/10 flex flex-col hidden md:flex">
+        <div class="p-6 border-b border-white/10">
+            <div class="flex items-center gap-2">
+                <div class="w-3 h-3 bg-blue-500 rounded-full shadow-[0_0_10px_rgba(59,130,246,0.8)]"></div>
+                <h1 class="text-xl font-bold tracking-tight text-white">VIN <span class="text-gray-500">OS</span></h1>
             </div>
         </div>
-        <div class="input-zone">
-            <div class="bar">
-                <input type="text" id="inp" placeholder="Message VinCloud..." onkeydown="if(event.key==='Enter') send()">
-                <button onclick="send()">SEND</button>
+
+        <div class="p-4">
+            <label class="text-xs text-gray-500 uppercase font-semibold tracking-wider ml-1">Neural Core</label>
+            <select id="modelSelect" class="mt-2 w-full bg-[#111] border border-white/10 text-gray-300 text-sm rounded-lg p-3 focus:outline-none focus:border-blue-500">
+                <optgroup label="Text Intelligence">
+                    <option value="llama-3.3-70b-versatile">VIN TITAN (Genius)</option>
+                    <option value="llama-3.1-8b-instant">VIN FLASH (Instant)</option>
+                    <option value="mixtral-8x7b-32768">VIN FLUX (Creative)</option>
+                    <option value="gemma2-9b-it">VIN POET (Lyric)</option>
+                </optgroup>
+                <optgroup label="Specialized Modules">
+                    <option value="vision">VIN OCULUS (Vision)</option>
+                    <option value="audio">VIN VOX (Audio)</option>
+                </optgroup>
+            </select>
+        </div>
+
+        <div class="flex-1 p-4 overflow-y-auto">
+            <div class="text-xs text-gray-500 uppercase font-semibold tracking-wider mb-2">System Stats</div>
+            <div class="bg-[#111] rounded-lg p-3 text-xs text-gray-400 space-y-2">
+                <div class="flex justify-between"><span>User:</span> <span class="text-white">{{ user }}</span></div>
+                <div class="flex justify-between"><span>Latency:</span> <span class="text-green-500">12ms</span></div>
+                <div class="flex justify-between"><span>Encryption:</span> <span class="text-blue-500">AES-256</span></div>
+            </div>
+            
+            <button onclick="clearHistory()" class="mt-4 w-full text-left px-3 py-2 text-sm text-red-400 hover:bg-red-500/10 rounded-lg transition">🗑️ Clear Memory</button>
+        </div>
+
+        <div class="p-4 border-t border-white/10">
+             <a href="/logout" class="flex items-center gap-2 text-sm text-gray-400 hover:text-white transition">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+                Disconnect
+            </a>
+            <p class="mt-2 text-[10px] text-gray-600 text-center">DESIGNED BY VINAY</p>
+        </div>
+    </div>
+
+    <div class="flex-1 flex flex-col relative bg-[#09090b]">
+        
+        <div id="chatFeed" class="flex-1 overflow-y-auto p-4 md:p-10 space-y-6 pb-32 scrollbar-hide">
+            <div class="text-center py-10">
+                <div class="inline-block p-4 rounded-full bg-white/5 mb-4"><span class="text-3xl">💠</span></div>
+                <h2 class="text-2xl font-bold text-white mb-2">Welcome to VIN OS</h2>
+                <p class="text-gray-400">Select a neural core to begin.</p>
+            </div>
+        </div>
+
+        <div class="absolute bottom-0 left-0 w-full p-4 md:p-6 bg-gradient-to-t from-black via-black to-transparent">
+            <div class="max-w-3xl mx-auto">
+                
+                <div id="filePreview" class="hidden mb-2 px-4 py-2 bg-blue-900/20 border border-blue-500/30 rounded-lg text-blue-400 text-sm flex justify-between items-center">
+                    <span id="fileName">file.jpg</span>
+                    <button onclick="clearFile()" class="text-white hover:text-red-400">×</button>
+                </div>
+
+                <div class="glass-panel rounded-2xl p-2 flex items-end gap-2 relative">
+                    
+                    <button onclick="document.getElementById('fileInput').click()" class="p-3 text-gray-400 hover:text-white hover:bg-white/10 rounded-xl transition">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"></path></svg>
+                    </button>
+                    <input type="file" id="fileInput" class="hidden" onchange="handleFileSelect(this)">
+
+                    <textarea id="userInput" rows="1" class="w-full bg-transparent text-white text-base p-3 focus:outline-none resize-none max-h-32" placeholder="Send a message to VIN..."></textarea>
+                    
+                    <button onclick="sendMessage()" id="sendBtn" class="p-3 bg-blue-600 text-white rounded-xl hover:bg-blue-500 transition shadow-lg shadow-blue-900/20">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14M12 5l7 7-7 7"></path></svg>
+                    </button>
+                </div>
+                <p class="text-center text-[10px] text-gray-600 mt-2">VIN OS v2.0 • Enterprise Edition</p>
             </div>
         </div>
     </div>
 
     <script>
-        let history = [];
-        async function send() {
-            const inp = document.getElementById('inp');
-            const txt = inp.value.trim();
-            if(!txt) return;
-            
-            // Add User Msg
-            addMsg(txt, 'user-av', 'U');
-            inp.value = "";
-            history.push({"role": "user", "content": txt});
+        let chatHistory = [];
+        let currentFile = null;
 
-            // Add Loading
-            const loadId = 'load-'+Date.now();
-            addMsg("Processing...", 'ai-av', 'V', loadId);
+        // Load History on Start
+        window.onload = () => {
+            const saved = localStorage.getItem('vin_history');
+            if (saved) {
+                chatHistory = JSON.parse(saved);
+                chatHistory.forEach(msg => appendMessage(msg.role, msg.content, false));
+            }
+        };
 
-            // Fetch AI
-            try {
-                const res = await fetch('/chat', {
-                    method: 'POST', 
-                    headers: {'Content-Type': 'application/json'}, 
-                    body: JSON.stringify({model: document.getElementById('model').value, history: history})
-                });
-                const data = await res.json();
+        function handleFileSelect(input) {
+            if (input.files && input.files[0]) {
+                currentFile = input.files[0];
+                document.getElementById('filePreview').classList.remove('hidden');
+                document.getElementById('fileName').innerText = currentFile.name;
                 
-                document.getElementById(loadId).remove();
-                addMsg(data.response, 'ai-av', 'V');
-                history.push({"role": "assistant", "content": data.response});
-            } catch(e) {
-                document.getElementById(loadId).innerText = "Error: System Busy";
+                // Auto-switch model based on file type
+                const select = document.getElementById('modelSelect');
+                if (currentFile.type.startsWith('image/')) select.value = 'vision';
+                else if (currentFile.type.startsWith('audio/')) select.value = 'audio';
             }
         }
 
-        function addMsg(text, avClass, letter, id=null) {
+        function clearFile() {
+            currentFile = null;
+            document.getElementById('fileInput').value = '';
+            document.getElementById('filePreview').classList.add('hidden');
+        }
+
+        function clearHistory() {
+            localStorage.removeItem('vin_history');
+            chatHistory = [];
+            document.getElementById('chatFeed').innerHTML = '';
+            location.reload();
+        }
+
+        async function sendMessage() {
+            const input = document.getElementById('userInput');
+            const text = input.value.trim();
+            const model = document.getElementById('modelSelect').value;
+
+            if (!text && !currentFile) return;
+
+            // UI Update
+            appendMessage('user', text || (currentFile ? `[Uploaded: ${currentFile.name}]` : ''), true);
+            input.value = '';
+            
+            // Show Loading
+            const loadingId = 'load-' + Date.now();
+            appendMessage('assistant', 'Processing...', false, loadingId);
+
+            try {
+                let response;
+                
+                if (currentFile) {
+                    // HANDLE FILE UPLOAD (Vision/Audio)
+                    const formData = new FormData();
+                    formData.append('file', currentFile);
+                    if (text) formData.append('prompt', text);
+                    
+                    const endpoint = model === 'audio' ? '/api/audio' : '/api/vision';
+                    const res = await fetch(endpoint, { method: 'POST', body: formData });
+                    const data = await res.json();
+                    response = data.response;
+                    clearFile();
+                } else {
+                    // HANDLE TEXT CHAT
+                    const res = await fetch('/api/chat', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ 
+                            message: text, 
+                            history: chatHistory, 
+                            model: model 
+                        })
+                    });
+                    const data = await res.json();
+                    response = data.response;
+                }
+
+                document.getElementById(loadingId).remove();
+                appendMessage('assistant', response, true);
+
+            } catch (e) {
+                document.getElementById(loadingId).innerText = "⚠️ System Offline.";
+            }
+        }
+
+        function appendMessage(role, text, save) {
+            const feed = document.getElementById('chatFeed');
             const div = document.createElement('div');
-            div.className = 'msg';
-            if(id) div.id = id;
-            div.innerHTML = `<div class="avatar ${avClass}">${letter}</div><div class="content">${text}</div>`;
-            document.getElementById('chat').appendChild(div);
-            document.getElementById('chat').scrollTop = 99999;
+            const isUser = role === 'user';
+            
+            div.className = `flex ${isUser ? 'justify-end' : 'justify-start'}`;
+            div.innerHTML = `
+                <div class="max-w-[80%] rounded-2xl p-4 text-sm leading-relaxed ${isUser ? 'msg-user' : 'msg-ai'}">
+                    ${isUser ? text : marked.parse(text)}
+                </div>
+            `;
+            
+            if (arguments[3]) div.id = arguments[3]; // Set ID for loading msg
+            
+            feed.appendChild(div);
+            feed.scrollTop = feed.scrollHeight;
+
+            if (save) {
+                chatHistory.push({ role, content: text });
+                // Only save text chats to local storage to save space
+                if (!currentFile) localStorage.setItem('vin_history', JSON.stringify(chatHistory));
+            }
+        }
+        
+        // Auto-resize textarea
+        const tx = document.getElementsByTagName("textarea");
+        for (let i = 0; i < tx.length; i++) {
+            tx[i].setAttribute("style", "height:" + (tx[i].scrollHeight) + "px;overflow-y:hidden;");
+            tx[i].addEventListener("input", OnInput, false);
+        }
+        function OnInput() {
+            this.style.height = 0;
+            this.style.height = (this.scrollHeight) + "px";
         }
     </script>
 </body>
