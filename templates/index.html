@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VIN CLOUD | OS</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        :root { --bg: #09090b; --panel: #18181b; --accent: #00ff80; --text: #e4e4e7; --border: #27272a; }
+        body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; margin: 0; display: flex; height: 100vh; overflow: hidden; }
+        
+        /* SIDEBAR */
+        .sidebar { width: 260px; background: #0f0f11; border-right: 1px solid var(--border); padding: 25px; display: flex; flex-direction: column; justify-content: space-between; }
+        .logo { font-size: 16px; font-weight: 700; color: white; letter-spacing: 1px; margin-bottom: 30px; display: flex; align-items: center; gap: 10px; }
+        .dot { width: 8px; height: 8px; background: var(--accent); border-radius: 50%; box-shadow: 0 0 10px var(--accent); }
+        
+        /* DROPDOWN */
+        select { width: 100%; background: var(--panel); border: 1px solid var(--border); color: white; padding: 12px; border-radius: 8px; margin-bottom: 20px; cursor: pointer; outline: none; }
+        
+        /* MAIN CHAT */
+        .main { flex: 1; display: flex; flex-direction: column; position: relative; }
+        .chat-area { flex: 1; padding: 40px; overflow-y: auto; display: flex; flex-direction: column; gap: 20px; max-width: 900px; margin: 0 auto; width: 100%; }
+        
+        .msg { display: flex; gap: 15px; line-height: 1.6; animation: fade 0.3s ease; }
+        .avatar { width: 30px; height: 30px; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-weight: bold; flex-shrink: 0; }
+        .user-av { background: white; color: black; }
+        .ai-av { background: var(--panel); border: 1px solid var(--border); color: var(--accent); }
+        .content { margin-top: 4px; }
+        
+        /* INPUT */
+        .input-zone { padding: 30px; display: flex; justify-content: center; background: var(--bg); }
+        .bar { width: 100%; max-width: 900px; background: var(--panel); border: 1px solid var(--border); border-radius: 12px; display: flex; padding: 5px; }
+        input { flex: 1; background: transparent; border: none; color: white; padding: 15px; font-size: 16px; outline: none; }
+        button { background: var(--accent); color: black; border: none; padding: 0 25px; border-radius: 8px; font-weight: bold; cursor: pointer; transition: 0.2s; }
+        button:hover { opacity: 0.8; }
+        
+        .logout { color: #666; text-decoration: none; font-size: 14px; transition: 0.2s; }
+        .logout:hover { color: white; }
+        @keyframes fade { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <div>
+            <div class="logo"><div class="dot"></div> VIN CLOUD OS</div>
+            <select id="model">
+                <option value="llama-3.3-70b-versatile">Llama 3.3 (Genius)</option>
+                <option value="llama-3.1-8b-instant">Llama 3.1 (Fast)</option>
+                <option value="mixtral-8x7b-32768">Mixtral (Creative)</option>
+            </select>
+        </div>
+        <a href="/logout" class="logout">← Log Out</a>
+    </div>
+
+    <div class="main">
+        <div class="chat-area" id="chat">
+            <div class="msg">
+                <div class="avatar ai-av">V</div>
+                <div class="content">Secure Connection Established. Welcome, {{ user }}.</div>
+            </div>
+        </div>
+        <div class="input-zone">
+            <div class="bar">
+                <input type="text" id="inp" placeholder="Message VinCloud..." onkeydown="if(event.key==='Enter') send()">
+                <button onclick="send()">SEND</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let history = [];
+        async function send() {
+            const inp = document.getElementById('inp');
+            const txt = inp.value.trim();
+            if(!txt) return;
+            
+            // Add User Msg
+            addMsg(txt, 'user-av', 'U');
+            inp.value = "";
+            history.push({"role": "user", "content": txt});
+
+            // Add Loading
+            const loadId = 'load-'+Date.now();
+            addMsg("Processing...", 'ai-av', 'V', loadId);
+
+            // Fetch AI
+            try {
+                const res = await fetch('/chat', {
+                    method: 'POST', 
+                    headers: {'Content-Type': 'application/json'}, 
+                    body: JSON.stringify({model: document.getElementById('model').value, history: history})
+                });
+                const data = await res.json();
+                
+                document.getElementById(loadId).remove();
+                addMsg(data.response, 'ai-av', 'V');
+                history.push({"role": "assistant", "content": data.response});
+            } catch(e) {
+                document.getElementById(loadId).innerText = "Error: System Busy";
+            }
+        }
+
+        function addMsg(text, avClass, letter, id=null) {
+            const div = document.createElement('div');
+            div.className = 'msg';
+            if(id) div.id = id;
+            div.innerHTML = `<div class="avatar ${avClass}">${letter}</div><div class="content">${text}</div>`;
+            document.getElementById('chat').appendChild(div);
+            document.getElementById('chat').scrollTop = 99999;
+        }
+    </script>
+</body>
+</html>

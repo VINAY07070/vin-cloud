@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>VIN CLOUD | Access</title>
+    <style>
+        body { margin: 0; background: #050505; display: flex; align-items: center; justify-content: center; height: 100vh; font-family: sans-serif; color: white; overflow: hidden; }
+        .bg-glow { position: absolute; width: 600px; height: 600px; background: radial-gradient(circle, rgba(0,255,128,0.1) 0%, rgba(0,0,0,0) 70%); z-index: -1; animation: pulse 5s infinite; }
+        .card { background: rgba(255,255,255,0.03); border: 1px solid #222; padding: 40px; border-radius: 15px; width: 320px; text-align: center; backdrop-filter: blur(10px); box-shadow: 0 20px 50px rgba(0,0,0,0.5); }
+        h1 { letter-spacing: 2px; font-weight: 300; margin-bottom: 30px; }
+        input { width: 100%; padding: 12px; margin: 10px 0; background: #111; border: 1px solid #333; color: white; border-radius: 5px; outline: none; box-sizing: border-box; }
+        input:focus { border-color: #00ff80; }
+        button { width: 100%; padding: 12px; margin-top: 20px; background: #00ff80; color: black; border: none; border-radius: 5px; font-weight: bold; cursor: pointer; transition: 0.3s; }
+        button:hover { background: white; box-shadow: 0 0 15px white; }
+        .error { color: #ff4444; font-size: 12px; margin-top: 10px; }
+        @keyframes pulse { 0% { opacity: 0.5; transform: scale(1); } 50% { opacity: 1; transform: scale(1.1); } 100% { opacity: 0.5; transform: scale(1); } }
+    </style>
+</head>
+<body>
+    <div class="bg-glow"></div>
+    <div class="card">
+        <h1>VIN CLOUD</h1>
+        <form action="/login" method="post">
+            <input type="text" name="username" placeholder="Identity" required>
+            <input type="password" name="password" placeholder="Passkey" required>
+            <button type="submit">AUTHENTICATE</button>
+        </form>
+        {% if error %}
+        <div class="error">{{ error }}</div>
+        {% endif %}
+    </div>
+</body>
+</html>
