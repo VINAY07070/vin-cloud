@@ -2,272 +2,335 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>VIN ETERNITY | ENGINE</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VinGPT Pro</title>
+    
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/9.1.2/marked.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>✨</text></svg>">
+
     <style>
-        /* CORE AESTHETICS */
-        body { font-family: 'Rajdhani', sans-serif; background: #000; color: #fff; overflow: hidden; cursor: crosshair; }
-        .mono { font-family: 'Share Tech Mono', monospace; }
+        /* Modern Scrollbar */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-thumb { background: #e5e7eb; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #d1d5db; }
         
-        /* PARALLAX BG */
-        #starfield { position: absolute; top: -50%; left: -50%; width: 200%; height: 200%; background-image: radial-gradient(white 1px, transparent 1px); background-size: 50px 50px; opacity: 0.1; z-index: 0; transition: transform 0.1s ease-out; }
-
-        /* MESSAGE STYLES */
-        .msg-user { background: rgba(0, 255, 255, 0.1); border: 1px solid #00ffff; color: #00ffff; border-radius: 12px 0 12px 12px; box-shadow: 0 0 10px rgba(0,255,255,0.1); }
-        .msg-ai { background: rgba(0, 0, 0, 0.8); border-left: 3px solid #fff; padding-left: 15px; color: #ccc; font-family: 'Share Tech Mono', monospace; font-size: 14px; }
+        /* Markdown Styles */
+        .prose pre { background: #1e1e1e !important; padding: 1rem; border-radius: 0.5rem; overflow-x: auto; margin: 1rem 0; }
+        .prose code { font-family: 'Menlo', 'Monaco', 'Courier New', monospace; font-size: 0.9em; }
+        .prose p { margin-bottom: 0.8rem; line-height: 1.6; }
+        .prose ul { list-style-type: disc; padding-left: 1.5rem; margin-bottom: 1rem; }
+        .prose ol { list-style-type: decimal; padding-left: 1.5rem; margin-bottom: 1rem; }
+        .prose strong { font-weight: 600; color: #111827; }
         
-        /* REBEL MODE */
-        .rebel .msg-ai { border-left-color: #ff0000; color: #ff9999; }
-        .rebel-glow { box-shadow: 0 0 20px rgba(255, 0, 0, 0.3) !important; border-color: #ff0000 !important; }
-
-        /* DECRYPT EFFECT CURSOR */
-        .cursor { display: inline-block; width: 8px; height: 16px; background: #0ff; animation: blink 1s infinite; }
+        /* Typing Cursor */
+        .typing::after { content: '▋'; animation: blink 1s infinite; color: #000; }
+        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+        
+        /* Loading Skeleton */
+        .skeleton { background: linear-gradient(90deg, #f3f4f6 25%, #e5e7eb 50%, #f3f4f6 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite; border-radius: 4px; height: 1em; width: 100%; display: inline-block; }
+        @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
     </style>
 </head>
-<body class="h-screen flex flex-col relative">
+<body class="bg-white h-screen flex text-gray-900 font-sans antialiased overflow-hidden">
 
-    <div id="starfield"></div>
-
-    <div class="h-16 border-b border-white/10 flex justify-between items-center px-6 bg-black/80 backdrop-blur-md z-50 relative">
-        <div class="flex flex-col">
-            <h1 class="text-2xl font-bold tracking-[4px]">VIN<span class="text-cyan-400">ETERNITY</span></h1>
-            <span class="text-[9px] text-gray-500 mono tracking-widest">OP: {{ user }} // ID: {{ mission_id }}</span>
+    <div id="sidebar" class="w-64 bg-gray-50 border-r border-gray-200 flex flex-col hidden md:flex transition-all z-20">
+        <div class="p-4 flex items-center gap-2 border-b border-gray-200">
+            <div class="w-8 h-8 bg-black text-white rounded-lg flex items-center justify-center font-bold">V</div>
+            <span class="font-semibold text-gray-900 tracking-tight">VinGPT Pro</span>
         </div>
-        
-        <div class="flex items-center gap-4">
-            <button id="voiceBtn" onclick="toggleVoice()" class="text-[10px] border border-gray-600 px-3 py-1 rounded text-gray-400 hover:text-white transition">
-                VOICE: OFF
-            </button>
+
+        <div class="flex-1 overflow-y-auto p-4 space-y-6">
             
-            <button id="rebelBtn" onclick="toggleRebel()" class="text-[10px] border border-cyan-600 px-3 py-1 rounded text-cyan-400 hover:bg-cyan-900/30 transition">
-                MODE: CORE
-            </button>
-
-            <a href="/logout" class="text-xs text-red-500 hover:text-red-300">LOGOUT</a>
-        </div>
-    </div>
-
-    <div id="chatFeed" class="flex-1 overflow-y-auto p-4 md:p-8 space-y-6 pb-32 z-10 scroll-smooth relative">
-        <div id="intro" class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none opacity-50">
-            <div class="w-20 h-20 border border-cyan-500 rounded-full flex items-center justify-center animate-pulse mb-4">
-                <div class="w-16 h-16 bg-cyan-500/20 rounded-full"></div>
+            <div>
+                <label class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Model</label>
+                <select id="modelSelect" class="w-full mt-2 p-2 text-sm bg-white border border-gray-200 rounded-md focus:ring-1 focus:ring-black outline-none cursor-pointer">
+                    <option value="llama-3.3-70b-versatile">Llama 3.3 70B (Smartest)</option>
+                    <option value="llama-3.1-70b-versatile">Llama 3.1 70B (Stable)</option>
+                    <option value="mixtral-8x7b-32768">Mixtral 8x7B (Balanced)</option>
+                    <option value="gemma2-9b-it">Gemma 2 9B (Creative)</option>
+                    <option value="llama-3.1-8b-instant">Llama 3.1 8B (Fast)</option>
+                </select>
             </div>
-            <h2 class="text-xl mono text-cyan-500">SYSTEM INITIALIZED</h2>
-            <p class="text-xs text-gray-500 mt-2">WAITING FOR OPERATOR INPUT...</p>
-        </div>
-    </div>
 
-    <div class="bg-black/90 border-t border-white/10 p-4 w-full absolute bottom-0 z-50">
-        <div class="max-w-4xl mx-auto flex flex-col gap-2">
-            
-            <select id="modelSelect" class="bg-black border border-white/10 text-[10px] text-gray-500 p-1 w-max outline-none focus:border-cyan-500">
-                <option value="llama-3.3-70b-versatile">VIN TITAN (LOGIC CORE)</option>
-                <option value="chatgpt-os">CHATGPT OS (PREMIUM)</option>
-                <option value="vision">VIN OCULUS (VISUAL)</option>
-                <option value="audio">VIN VOX (AUDITORY)</option>
-            </select>
+            <div>
+                <label class="text-xs font-semibold text-gray-500 uppercase tracking-wider">System Config</label>
+                <div class="mt-2 space-y-3">
+                    <input type="text" id="sysPrompt" value="You are a helpful AI." class="w-full p-2 text-sm bg-white border border-gray-200 rounded-md placeholder-gray-400 focus:ring-1 focus:ring-black outline-none" placeholder="System Prompt (e.g. Be rude)">
+                    
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs text-gray-600">Creativity</span>
+                        <input type="range" id="tempRange" min="0" max="1" step="0.1" value="0.7" class="w-20 accent-black">
+                    </div>
+                </div>
+            </div>
 
-            <div id="inputBox" class="flex items-end gap-0 border border-white/20 bg-black transition-all">
-                <button onclick="document.getElementById('fileInput').click()" class="p-3 text-gray-500 hover:text-white">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+            <div class="pt-4 border-t border-gray-200 space-y-2">
+                <button onclick="exportChat()" class="w-full text-left text-sm text-gray-600 hover:text-black hover:bg-gray-100 p-2 rounded-md flex items-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                    Export Chat
                 </button>
-                <input type="file" id="fileInput" class="hidden" onchange="handleFile(this)">
-                
-                <textarea id="userInput" rows="1" class="w-full bg-transparent text-white text-base p-3 focus:outline-none resize-none mono" placeholder="Enter Command Sequence..."></textarea>
-                
-                <button onclick="send()" class="p-3 text-cyan-500 font-bold hover:bg-cyan-900/20 tracking-widest text-xs">SEND</button>
+                <button onclick="clearChat()" class="w-full text-left text-sm text-red-500 hover:bg-red-50 p-2 rounded-md flex items-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                    Clear Context
+                </button>
             </div>
         </div>
+
+        <div class="p-4 border-t border-gray-200">
+            <a href="/logout" class="flex items-center gap-2 text-sm text-gray-600 hover:text-black">
+                <div class="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center font-bold text-xs">{{ user[0]|upper }}</div>
+                <div class="flex flex-col">
+                    <span class="font-medium">{{ user }}</span>
+                    <span class="text-xs text-gray-400">Log out</span>
+                </div>
+            </a>
+        </div>
+    </div>
+
+    <div class="flex-1 flex flex-col relative bg-white">
+        
+        <div class="md:hidden p-3 border-b border-gray-200 flex justify-between items-center bg-white/80 backdrop-blur z-30 sticky top-0">
+            <span class="font-bold">VinGPT</span>
+            <button onclick="document.getElementById('sidebar').classList.toggle('hidden'); document.getElementById('sidebar').classList.toggle('absolute'); document.getElementById('sidebar').classList.toggle('h-full');" class="text-gray-600">☰</button>
+        </div>
+
+        <div id="chatContainer" class="flex-1 overflow-y-auto p-4 md:p-8 space-y-6 pb-32 max-w-3xl mx-auto w-full">
+            <div id="emptyState" class="h-full flex flex-col items-center justify-center text-center opacity-50">
+                <div class="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center mb-4">
+                    <span class="text-3xl">✨</span>
+                </div>
+                <h2 class="text-xl font-semibold text-gray-900">How can I help you today?</h2>
+            </div>
+        </div>
+
+        <div class="absolute bottom-0 w-full bg-gradient-to-t from-white via-white to-transparent pb-6 pt-10 px-4">
+            <div class="max-w-3xl mx-auto relative">
+                <div class="bg-white border border-gray-200 shadow-xl rounded-2xl flex items-end p-2 focus-within:ring-2 focus-within:ring-black/10 transition-shadow">
+                    
+                    <textarea id="userInput" rows="1" class="w-full bg-transparent border-none focus:ring-0 resize-none p-3 max-h-48 text-gray-900 placeholder-gray-400" placeholder="Message VinGPT..."></textarea>
+                    
+                    <button onclick="sendMessage()" id="sendBtn" class="p-2 bg-black text-white rounded-xl hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed mb-1 mr-1 transition-colors">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14M12 5l7 7-7 7"></path></svg>
+                    </button>
+                </div>
+                <p class="text-center text-xs text-gray-400 mt-2">VinGPT can make mistakes. Verify important info.</p>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast" class="fixed top-5 right-5 bg-black text-white px-4 py-2 rounded-lg shadow-lg transform translate-y-[-150%] transition-transform duration-300 z-50 text-sm">
+        Notification
     </div>
 
     <script>
-        // --- CONFIG ---
-        let rebel = false;
-        let voice = false;
         let history = [];
-        let currentFile = null;
-        const synth = window.speechSynthesis;
+        const chatContainer = document.getElementById('chatContainer');
+        const userInput = document.getElementById('userInput');
 
-        // --- MOUSE PARALLAX EFFECT ---
-        document.addEventListener('mousemove', (e) => {
-            const x = (window.innerWidth - e.pageX) / 50;
-            const y = (window.innerHeight - e.pageY) / 50;
-            document.getElementById('starfield').style.transform = `translate(${x}px, ${y}px)`;
-        });
+        // --- CORE FUNCTIONS ---
 
-        // --- SOUND EFFECTS (Click) ---
-        function playClick() {
-            // Simple oscillator beep for "tech" feel
-            const ctx = new (window.AudioContext || window.webkitAudioContext)();
-            const osc = ctx.createOscillator();
-            const gain = ctx.createGain();
-            osc.type = 'sine';
-            osc.frequency.value = 800;
-            gain.gain.exponentialRampToValueAtTime(0.00001, ctx.currentTime + 0.04);
-            osc.connect(gain);
-            gain.connect(ctx.destination);
-            osc.start();
-            osc.stop(0.04);
-        }
+        async function sendMessage() {
+            const text = userInput.value.trim();
+            if (!text) return;
 
-        // --- TOGGLES ---
-        function toggleRebel() {
-            playClick();
-            rebel = !rebel;
-            const btn = document.getElementById('rebelBtn');
-            const box = document.getElementById('inputBox');
-            document.body.classList.toggle('rebel', rebel);
+            // UI Updates
+            document.getElementById('emptyState').style.display = 'none';
+            userInput.value = '';
+            userInput.style.height = 'auto';
             
-            if(rebel) {
-                btn.innerText = "MODE: REBEL";
-                btn.classList.add('text-red-500', 'border-red-500');
-                box.classList.add('rebel-glow');
-            } else {
-                btn.innerText = "MODE: CORE";
-                btn.classList.remove('text-red-500', 'border-red-500');
-                box.classList.remove('rebel-glow');
-            }
-        }
+            // Add User Message
+            addMessage('user', text);
+            history.push({ role: "user", content: text });
 
-        function toggleVoice() {
-            playClick();
-            voice = !voice;
-            const btn = document.getElementById('voiceBtn');
-            btn.innerText = voice ? "VOICE: ON" : "VOICE: OFF";
-            btn.className = voice ? "text-[10px] border border-green-500 px-3 py-1 rounded text-green-400" : "text-[10px] border border-gray-600 px-3 py-1 rounded text-gray-400";
-        }
-
-        function speak(text) {
-            if(!voice) return;
-            synth.cancel();
-            const utter = new SpeechSynthesisUtterance(text);
-            utter.pitch = rebel ? 0.8 : 1; // Lower pitch for Rebel
-            utter.rate = 1.1;
-            synth.speak(utter);
-        }
-
-        // --- DECRYPTION TEXT EFFECT ---
-        function decryptText(element, text) {
-            let iterations = 0;
-            const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890@#$%^&*";
-            const interval = setInterval(() => {
-                element.innerText = text.split("").map((letter, index) => {
-                    if(index < iterations) return letter;
-                    return letters[Math.floor(Math.random() * 26)];
-                }).join("");
-                
-                if(iterations >= text.length) clearInterval(interval);
-                iterations += 1 / 2; // Speed
-            }, 30);
-        }
-
-        // --- CORE CHAT ---
-        function handleFile(input) {
-            if(input.files[0]) {
-                playClick();
-                currentFile = input.files[0];
-                const box = document.getElementById('userInput');
-                box.value = `[FILE ATTACHED: ${currentFile.name}]`;
-                const sel = document.getElementById('modelSelect');
-                if(currentFile.type.includes('image')) sel.value = 'vision';
-                if(currentFile.type.includes('audio')) sel.value = 'audio';
-            }
-        }
-
-        async function send() {
-            playClick();
-            const input = document.getElementById('userInput');
-            let txt = input.value.trim();
-            const model = document.getElementById('modelSelect').value;
-
-            if(!txt && !currentFile) return;
-            if(txt.startsWith("[FILE ATTACHED")) txt = ""; // Clear file placeholder text
-
-            document.getElementById('intro').style.display = 'none';
-            input.value = '';
-
-            // User Msg
-            appendMsg('user', txt || `[TRANSMITTING FILE: ${currentFile.name}]`);
-
-            // Loading
-            const loadId = 'load-'+Date.now();
-            appendLoading(loadId);
+            // Add Loading Skeleton
+            const loadingId = 'load-' + Date.now();
+            addLoading(loadingId);
 
             try {
-                let resp;
-                if(currentFile) {
-                    const fd = new FormData();
-                    fd.append('file', currentFile);
-                    if(txt) fd.append('prompt', txt);
-                    const ep = model === 'audio' ? '/api/audio' : '/api/vision';
-                    const r = await fetch(ep, {method:'POST', body:fd});
-                    const d = await r.json();
-                    resp = d.response;
-                    currentFile = null;
-                } else {
-                    const r = await fetch('/api/chat', {
-                        method:'POST',
-                        headers:{'Content-Type':'application/json'},
-                        body:JSON.stringify({
-                            message:txt, history:history, model:model, rebel: rebel
-                        })
-                    });
-                    const d = await r.json();
-                    resp = d.response;
-                }
+                const response = await fetch('/api/generate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        history: history,
+                        model: document.getElementById('modelSelect').value,
+                        system: document.getElementById('sysPrompt').value,
+                        temperature: document.getElementById('tempRange').value
+                    })
+                });
 
-                document.getElementById(loadId).remove();
+                if (!response.ok) throw new Error("Connection failed");
+                const data = await response.json();
                 
-                // Add AI Msg with Effect
-                const msgDiv = appendMsg('ai', ''); // Create empty bubble
-                const contentDiv = msgDiv.querySelector('.content');
-                
-                // Markdown parse + Decrypt effect is tricky, so we just type raw text or simple parse
-                // For "Matrix" feel, we decrypt short text, but for long text we just fade in.
-                contentDiv.innerHTML = marked.parse(resp);
-                speak(resp.replace(/[*#`]/g, '')); // Speak clean text
+                // Remove Loading & Stream Response
+                document.getElementById(loadingId).remove();
+                addMessage('assistant', data.response, true); // true = animate
+                history.push({ role: "assistant", content: data.response });
+                saveLocal();
 
-                history.push({"role": rebel ? "user" : "user", "content": txt});
-                history.push({"role": "assistant", "content": resp});
-
-            } catch(e) {
-                document.getElementById(loadId).remove();
-                appendMsg('ai', "SYSTEM CRITICAL FAILURE: " + e);
+            } catch (e) {
+                document.getElementById(loadingId).remove();
+                showToast("Error: " + e.message);
             }
         }
 
-        function appendMsg(role, text) {
-            const feed = document.getElementById('chatFeed');
+        // --- UI BUILDERS ---
+
+        function addMessage(role, text, animate = false) {
             const div = document.createElement('div');
-            div.className = `flex ${role==='user'?'justify-end':'justify-start'}`;
+            const isUser = role === 'user';
             
+            div.className = `flex gap-4 ${isUser ? 'flex-row-reverse' : ''} mb-6`;
+            
+            const avatar = isUser 
+                ? `<div class="w-8 h-8 bg-gray-200 rounded-full flex-shrink-0"></div>`
+                : `<div class="w-8 h-8 bg-black text-white rounded-full flex items-center justify-center flex-shrink-0 font-bold">V</div>`;
+            
+            const contentClass = isUser 
+                ? "bg-gray-100 px-4 py-2 rounded-2xl rounded-tr-none text-gray-900" 
+                : "prose max-w-none text-gray-800 w-full";
+
             div.innerHTML = `
-                <div class="max-w-[85%] p-4 text-sm ${role==='user'?'msg-user':'msg-ai'} shadow-lg">
-                    <div class="content">${role==='user' ? text : ''}</div>
+                ${avatar}
+                <div class="relative group max-w-[85%]">
+                    <div class="${contentClass} ${animate ? 'typing' : ''}" id="msg-${Date.now()}">
+                        ${isUser ? text : (animate ? '' : marked.parse(text))}
+                    </div>
+                    ${!isUser ? `
+                    <div class="flex gap-2 mt-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button onclick="copyText(this)" class="text-xs text-gray-400 hover:text-black">Copy</button>
+                        <button onclick="speakText(this)" class="text-xs text-gray-400 hover:text-black">Read</button>
+                    </div>` : ''}
                 </div>
             `;
-            feed.appendChild(div);
-            feed.scrollTop = feed.scrollHeight;
-            return div;
+            
+            chatContainer.appendChild(div);
+            scrollToBottom();
+
+            if (animate && !isUser) {
+                typeText(div.querySelector('.typing'), text);
+            } else if (!isUser) {
+                 hljs.highlightAll();
+            }
         }
 
-        function appendLoading(id) {
-            const feed = document.getElementById('chatFeed');
+        function addLoading(id) {
             const div = document.createElement('div');
             div.id = id;
-            div.className = 'text-[10px] text-cyan-500 ml-4 animate-pulse mono';
-            div.innerText = 'PROCESSING NEURAL PATHWAYS...';
-            feed.appendChild(div);
-            feed.scrollTop = feed.scrollHeight;
+            div.className = "flex gap-4 mb-6";
+            div.innerHTML = `
+                <div class="w-8 h-8 bg-black text-white rounded-full flex items-center justify-center flex-shrink-0 font-bold">V</div>
+                <div class="space-y-2 w-full max-w-md pt-2">
+                    <div class="skeleton w-3/4"></div>
+                    <div class="skeleton w-1/2"></div>
+                </div>
+            `;
+            chatContainer.appendChild(div);
+            scrollToBottom();
         }
 
-        // Enter Key Send
-        document.getElementById('userInput').addEventListener('keydown', (e) => {
-            if(e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); }
+        // --- UTILITIES ---
+
+        function typeText(element, text) {
+            let i = 0;
+            element.innerHTML = ""; // Clear for typing
+            const speed = 10; // ms per char
+            
+            function type() {
+                if (i < text.length) {
+                    element.innerHTML = marked.parse(text.substring(0, i + 1));
+                    i++;
+                    scrollToBottom();
+                    setTimeout(type, speed);
+                } else {
+                    element.classList.remove('typing');
+                    hljs.highlightAll();
+                    // Clean up markdown rendering artifacts if necessary
+                    element.innerHTML = marked.parse(text); 
+                    hljs.highlightAll();
+                }
+            }
+            type();
+        }
+
+        function copyText(btn) {
+            const text = btn.parentElement.parentElement.querySelector('.prose').innerText;
+            navigator.clipboard.writeText(text);
+            showToast("Copied to clipboard");
+        }
+
+        function speakText(btn) {
+            const text = btn.parentElement.parentElement.querySelector('.prose').innerText;
+            const utter = new SpeechSynthesisUtterance(text);
+            
+            // Try to find a good voice
+            const voices = window.speechSynthesis.getVoices();
+            const preferred = voices.find(v => v.name.includes("Google US English") || v.name.includes("Samantha"));
+            if (preferred) utter.voice = preferred;
+            
+            window.speechSynthesis.cancel();
+            window.speechSynthesis.speak(utter);
+        }
+
+        function scrollToBottom() {
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+
+        function showToast(msg) {
+            const t = document.getElementById('toast');
+            t.innerText = msg;
+            t.style.transform = "translateY(0)";
+            setTimeout(() => t.style.transform = "translateY(-150%)", 2000);
+        }
+
+        function exportChat() {
+            const text = history.map(m => `${m.role.toUpperCase()}: ${m.content}`).join('\n\n');
+            const blob = new Blob([text], { type: 'text/plain' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = 'vin-gpt-chat.txt';
+            a.click();
+        }
+
+        function clearChat() {
+            if(confirm("Clear conversation context?")) {
+                history = [];
+                chatContainer.innerHTML = '';
+                document.getElementById('emptyState').style.display = 'flex';
+                localStorage.removeItem('vin_gpt_history');
+            }
+        }
+
+        function saveLocal() {
+            localStorage.setItem('vin_gpt_history', JSON.stringify(history));
+        }
+
+        // Auto-Resize Textarea
+        userInput.addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = (this.scrollHeight) + 'px';
         });
+
+        // Enter to send
+        userInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+        });
+
+        // Load History
+        window.onload = () => {
+            const saved = localStorage.getItem('vin_gpt_history');
+            if (saved) {
+                history = JSON.parse(saved);
+                if (history.length > 0) document.getElementById('emptyState').style.display = 'none';
+                history.forEach(m => addMessage(m.role, m.content, false));
+            }
+        };
     </script>
 </body>
 </html>
