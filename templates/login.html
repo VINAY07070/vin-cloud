@@ -3,52 +3,56 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VIN ID | Access</title>
+    <title>ACCESS CONTROL</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Space Grotesk', sans-serif; background: #000; overflow: hidden; }
-        .glass { background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.1); }
-        .glow { box-shadow: 0 0 40px rgba(59, 130, 246, 0.2); }
+        body { font-family: 'Share Tech Mono', monospace; background: #000; overflow: hidden; color: #0ff; }
+        .scan-line { width: 100%; height: 2px; background: #0ff; position: absolute; top: 0; animation: scan 3s infinite linear; opacity: 0.5; box-shadow: 0 0 10px #0ff; }
+        @keyframes scan { 0% { top: 0%; } 100% { top: 100%; } }
+        .hex-bg { background-image: radial-gradient(#0ff 1px, transparent 1px); background-size: 30px 30px; opacity: 0.1; }
+        input { background: transparent; border: 1px solid #0ff; color: #0ff; text-align: center; letter-spacing: 3px; }
+        input:focus { box-shadow: 0 0 20px #0ff, inset 0 0 10px #0ff; outline: none; }
+        .blink { animation: blink 1s infinite; }
+        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
     </style>
 </head>
 <body class="flex items-center justify-center h-screen relative">
-    
-    <div class="absolute inset-0 z-0">
-        <div class="absolute top-1/4 left-1/4 w-96 h-96 bg-blue-900 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-pulse"></div>
-        <div class="absolute top-1/3 right-1/4 w-96 h-96 bg-purple-900 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-pulse" style="animation-delay: 2s"></div>
-    </div>
+    <div class="absolute inset-0 hex-bg"></div>
+    <div class="scan-line"></div>
 
-    <div class="glass p-10 rounded-2xl w-full max-w-md z-10 glow mx-4">
-        <div class="text-center mb-8">
-            <h1 class="text-4xl font-bold text-white tracking-tighter mb-2">VIN<span class="text-blue-500">CLOUD</span></h1>
-            <p class="text-gray-400 text-sm">SECURE NEURAL INTERFACE</p>
-        </div>
+    <div class="z-10 text-center w-full max-w-sm p-6 border border-cyan-500/30 bg-black/80 backdrop-blur-sm relative">
+        <div class="absolute top-0 left-0 w-4 h-4 border-t-2 border-l-2 border-cyan-500"></div>
+        <div class="absolute top-0 right-0 w-4 h-4 border-t-2 border-r-2 border-cyan-500"></div>
+        <div class="absolute bottom-0 left-0 w-4 h-4 border-b-2 border-l-2 border-cyan-500"></div>
+        <div class="absolute bottom-0 right-0 w-4 h-4 border-b-2 border-r-2 border-cyan-500"></div>
+
+        <h1 class="text-4xl font-bold mb-2 tracking-[5px] text-cyan-400">VIN<span class="text-white">CORE</span></h1>
+        <p class="text-[10px] text-cyan-700 mb-8 uppercase">Restricted Access // Level 5</p>
 
         <form action="/login" method="post" class="space-y-6">
-            <div>
-                <input type="text" name="username" placeholder="Identity" required 
-                    class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 transition-colors">
+            <div class="relative">
+                <input type="text" name="username" placeholder="AGENT ID" required class="w-full py-3 text-lg uppercase placeholder-cyan-900">
             </div>
-            <div>
-                <input type="password" name="password" placeholder="Passkey" required 
-                    class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 transition-colors">
+            <div class="relative">
+                <input type="password" name="password" placeholder="PASSCODE" required class="w-full py-3 text-lg uppercase placeholder-cyan-900">
             </div>
-            <button type="submit" 
-                class="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white font-bold py-3 rounded-lg hover:opacity-90 transition-all transform hover:scale-[1.02]">
-                AUTHENTICATE
+            <button type="submit" class="w-full bg-cyan-900/20 border border-cyan-500 text-cyan-400 py-3 hover:bg-cyan-500 hover:text-black transition-all duration-300 uppercase tracking-widest font-bold">
+                Initialize Link
             </button>
         </form>
-        
+
         {% if error %}
-        <div class="mt-4 p-3 bg-red-500/10 border border-red-500/20 text-red-400 text-center text-sm rounded-lg">
-            {{ error }}
+        <div class="mt-4 text-red-500 text-xs blink border border-red-500 p-2">
+            ⚠️ ERROR: {{ error }}
         </div>
         {% endif %}
         
-        <div class="mt-8 text-center">
-            <p class="text-[10px] text-gray-600 tracking-widest uppercase">Engineered by Vinay</p>
+        <div class="mt-6 text-[9px] text-cyan-800">
+            SECURE CONNECTION ESTABLISHED<br>
+            ARCHITECT: V.K.
         </div>
     </div>
+    <script>localStorage.clear();</script>
 </body>
 </html>
