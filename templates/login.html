@@ -5,57 +5,63 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>VIN PRESTIGE</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=Rajdhani:wght@400;600&display=swap" rel="stylesheet">
     <style>
-        body { background: black; color: white; overflow: hidden; display: flex; align-items: center; justify-content: center; height: 100vh; font-family: 'Courier New', monospace; }
+        body { background: #000; color: white; overflow: hidden; display: flex; align-items: center; justify-content: center; height: 100vh; font-family: 'Rajdhani', sans-serif; }
+        .title-font { font-family: 'Orbitron', sans-serif; }
         
-        /* HYPERSPACE ANIMATION */
+        /* WARP ANIMATION */
         .star { position: absolute; width: 2px; height: 2px; background: white; opacity: 0; }
-        .warp .star { animation: warp 1s linear infinite; }
+        .warp .star { animation: warp 0.8s linear infinite; }
         @keyframes warp { 0% { opacity: 0; transform: scale(1) translateZ(0); } 50% { opacity: 1; } 100% { opacity: 0; transform: scale(10) translateZ(500px); } }
         
-        .fade-out { animation: fadeOut 1.5s forwards; }
-        @keyframes fadeOut { to { opacity: 0; transform: scale(1.1); } }
+        .fade-out { animation: fadeOut 1s forwards; }
+        @keyframes fadeOut { to { opacity: 0; transform: scale(1.2); filter: blur(10px); } }
+
+        .glass { background: rgba(255,255,255,0.03); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.1); }
     </style>
 </head>
 <body id="body">
-
     <div id="stars" class="absolute inset-0 z-0"></div>
 
-    <div id="loginBox" class="z-10 text-center p-8 border border-white/20 bg-black/80 backdrop-blur-md rounded-2xl w-full max-w-xs relative">
-        <h1 class="text-3xl font-bold mb-1 tracking-widest">VIN<span class="text-purple-500">PRESTIGE</span></h1>
-        <p class="text-[10px] text-gray-500 mb-8 uppercase tracking-[0.3em]">Architect: V.K.</p>
+    <div id="loginBox" class="glass z-10 p-10 rounded-2xl w-full max-w-xs text-center relative shadow-2xl shadow-purple-900/20">
+        <h1 class="title-font text-4xl font-bold mb-1 tracking-wider text-white">VIN<span class="text-purple-500">OS</span></h1>
+        <p class="text-[10px] text-gray-500 mb-8 uppercase tracking-[0.4em]">Architect: V.K.</p>
 
-        <form action="/login" method="post" onsubmit="handleLogin(event)" class="space-y-4">
-            <input type="text" id="user" name="username" placeholder="IDENTITY" required class="w-full bg-transparent border-b border-gray-600 p-2 text-center outline-none focus:border-purple-500 transition">
-            <input type="password" id="pass" name="password" placeholder="KEY" required class="w-full bg-transparent border-b border-gray-600 p-2 text-center outline-none focus:border-purple-500 transition">
+        <form action="/login" method="post" onsubmit="handleLogin(event)" class="space-y-5">
+            <div class="relative group">
+                <input type="text" name="username" placeholder="IDENTITY" required class="w-full bg-black/50 border border-gray-700 p-3 text-center text-white outline-none focus:border-purple-500 transition rounded-lg">
+            </div>
+            <div class="relative group">
+                <input type="password" name="password" placeholder="ACCESS KEY" required class="w-full bg-black/50 border border-gray-700 p-3 text-center text-white outline-none focus:border-purple-500 transition rounded-lg">
+            </div>
             
-            <button type="submit" class="w-full mt-6 bg-white/10 hover:bg-purple-600 text-white py-3 rounded text-xs font-bold uppercase tracking-widest transition duration-500">
-                Initiate Link
+            <button type="submit" class="w-full mt-4 bg-purple-900/30 border border-purple-500/50 hover:bg-purple-600 text-purple-200 hover:text-white py-3 rounded-lg text-sm font-bold uppercase tracking-widest transition duration-300 shadow-lg">
+                Connect
             </button>
         </form>
 
         {% if error %}
-        <div class="mt-4 text-red-500 text-xs border border-red-500/50 p-2 rounded">{{ error }}</div>
+        <div class="mt-6 text-red-500 text-xs border border-red-900/50 p-2 bg-red-900/10 rounded">{{ error }}</div>
         {% endif %}
     </div>
 
     <script>
         function handleLogin(e) {
-            // 1. Stop the form from sending immediately
             e.preventDefault();
-            
             const btn = document.querySelector('button');
             const box = document.getElementById('loginBox');
             const stars = document.getElementById('stars');
             
-            // 2. Play Animation
-            btn.innerText = "AUTHENTICATING...";
-            btn.classList.add('bg-purple-600');
+            btn.innerText = "VERIFYING...";
+            btn.classList.add('bg-purple-600', 'text-white');
+            
+            // Animation
             box.classList.add('fade-out');
             stars.classList.add('warp');
             
-            // Create Stars Effect
-            for(let i=0; i<100; i++) {
+            // Create Stars
+            for(let i=0; i<80; i++) {
                 let s = document.createElement('div');
                 s.className = 'star';
                 s.style.top = Math.random() * 100 + 'vh';
@@ -64,10 +70,7 @@
                 stars.appendChild(s);
             }
 
-            // 3. ACTUALLY SEND THE FORM after 1.2 seconds
-            setTimeout(() => {
-                e.target.submit(); 
-            }, 1200); 
+            setTimeout(() => { e.target.submit(); }, 1000); 
         }
     </script>
 </body>
