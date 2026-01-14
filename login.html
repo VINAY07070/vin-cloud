@@ -25,7 +25,7 @@
         <h1 class="text-3xl font-bold mb-1 tracking-widest">VIN<span class="text-purple-500">PRESTIGE</span></h1>
         <p class="text-[10px] text-gray-500 mb-8 uppercase tracking-[0.3em]">Architect: V.K.</p>
 
-        <form onsubmit="handleLogin(event)" class="space-y-4">
+        <form action="/login" method="post" onsubmit="handleLogin(event)" class="space-y-4">
             <input type="text" id="user" name="username" placeholder="IDENTITY" required class="w-full bg-transparent border-b border-gray-600 p-2 text-center outline-none focus:border-purple-500 transition">
             <input type="password" id="pass" name="password" placeholder="KEY" required class="w-full bg-transparent border-b border-gray-600 p-2 text-center outline-none focus:border-purple-500 transition">
             
@@ -35,26 +35,26 @@
         </form>
 
         {% if error %}
-        <div class="mt-4 text-red-500 text-xs">{{ error }}</div>
+        <div class="mt-4 text-red-500 text-xs border border-red-500/50 p-2 rounded">{{ error }}</div>
         {% endif %}
     </div>
 
     <script>
         function handleLogin(e) {
+            // 1. Stop the form from sending immediately
             e.preventDefault();
+            
             const btn = document.querySelector('button');
             const box = document.getElementById('loginBox');
             const stars = document.getElementById('stars');
             
-            // 1. UI Feedback
+            // 2. Play Animation
             btn.innerText = "AUTHENTICATING...";
             btn.classList.add('bg-purple-600');
-            
-            // 2. Start Animation
             box.classList.add('fade-out');
             stars.classList.add('warp');
             
-            // Create Stars
+            // Create Stars Effect
             for(let i=0; i<100; i++) {
                 let s = document.createElement('div');
                 s.className = 'star';
@@ -64,10 +64,10 @@
                 stars.appendChild(s);
             }
 
-            // 3. Submit after delay
+            // 3. ACTUALLY SEND THE FORM after 1.2 seconds
             setTimeout(() => {
-                e.target.submit();
-            }, 1200); // 1.2 second delay for effect
+                e.target.submit(); 
+            }, 1200); 
         }
     </script>
 </body>
