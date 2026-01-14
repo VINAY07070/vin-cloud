@@ -6,4 +6,3 @@ groq
 itsdangerous
 pydantic
 aiofiles
-shutil
