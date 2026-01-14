@@ -6,3 +6,7 @@ groq
 itsdangerous
 pydantic
 duckduckgo-search
+pypdf
+sqlalchemy
+passlib
+bcrypt

@@ -1,156 +1,240 @@
 """
-VinGPT Ultimate Backend
-Architect: Vinay
-Version: 5.0 (Autonomous Agent)
+VIN ETERNITY: ENTERPRISE EDITION
+Architect: V.K. (Vinay)
+Version: 10.0 (Final Polish)
 """
 
-from fastapi import FastAPI, Request, Form
-from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
-from fastapi.templating import Jinja2Templates
-from starlette.middleware.sessions import SessionMiddleware
-from groq import AsyncGroq
-from duckduckgo_search import DDGS
 import os
 import logging
 import asyncio
 import json
 import urllib.parse
+from datetime import datetime
+from typing import List, Optional
+
+# FASTAPI & CORE
+from fastapi import FastAPI, Request, Form, UploadFile, File, HTTPException, Depends
+from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
+from fastapi.templating import Jinja2Templates
+from fastapi.staticfiles import StaticFiles
+from starlette.middleware.sessions import SessionMiddleware
+
+# AI & TOOLS
+from groq import AsyncGroq
+from duckduckgo_search import DDGS
+from pypdf import PdfReader
+
+# DATABASE
+from sqlalchemy import create_engine, Column, Integer, String, Text, DateTime
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import sessionmaker, Session
+from passlib.context import CryptContext
 
 # --- 1. SYSTEM CONFIGURATION ---
 logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger("VinGPT")
+logger = logging.getLogger("VIN_CORE")
 
 API_KEY = os.getenv("GROQ_API_KEY")
+if not API_KEY:
+    logger.warning("CRITICAL: NO GROQ API KEY DETECTED")
+
 client = AsyncGroq(api_key=API_KEY)
 
-# Secure User Database
-USERS = {
-    "admin": "admin123",
-    "vinay": "vinay_pro",
-    "guest": "guest_access"
-}
-
-app = FastAPI()
-app.add_middleware(SessionMiddleware, secret_key="vin-ultimate-key-v5", https_only=False)
+app = FastAPI(title="VinEternity", version="10.0")
+app.add_middleware(SessionMiddleware, secret_key="vin-oppenheimer-key", https_only=False)
 templates = Jinja2Templates(directory="templates")
 
-# --- 2. TOOL: WEB SEARCH ---
-def search_web(query: str, max_results=3):
-    """Performs a live internet search securely."""
+# --- 2. DATABASE SETUP (SQLite) ---
+SQLALCHEMY_DATABASE_URL = "sqlite:///./vin.db"
+engine = create_engine(SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False})
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+Base = declarative_base()
+
+class User(Base):
+    __tablename__ = "users"
+    id = Column(Integer, primary_key=True, index=True)
+    username = Column(String, unique=True, index=True)
+    hashed_password = Column(String)
+
+class ChatHistory(Base):
+    __tablename__ = "history"
+    id = Column(Integer, primary_key=True, index=True)
+    username = Column(String, index=True)
+    role = Column(String) # 'user' or 'assistant'
+    content = Column(Text)
+    timestamp = Column(DateTime, default=datetime.utcnow)
+
+Base.metadata.create_all(bind=engine)
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
+def get_db():
+    db = SessionLocal()
     try:
-        results = DDGS().text(query, max_results=max_results)
-        if not results:
-            return "No internet results found."
-        
-        # Format results for the AI to read
-        summary = "INTERNET SEARCH RESULTS:\n"
+        yield db
+    finally:
+        db.close()
+
+# --- 3. INTELLIGENCE TOOLS ---
+
+def search_web(query: str):
+    """Secure Internet Access via DuckDuckGo"""
+    try:
+        results = DDGS().text(query, max_results=4)
+        if not results: return None
+        summary = "WEB INTEL:\n"
         for r in results:
-            summary += f"- {r['title']}: {r['body']} (Source: {r['href']})\n"
+            summary += f"- {r['title']}: {r['body']}\n"
         return summary
-    except Exception as e:
-        logger.error(f"Search failed: {e}")
-        return "Search unavailable."
+    except: return None
 
-# --- 3. TOOL: IMAGE GENERATION ---
-def generate_image_url(prompt: str):
-    """Generates a high-quality image URL via Pollinations AI."""
-    # Clean prompt for URL
+def generate_image(prompt: str):
+    """Pollinations AI Neural Rendering"""
     safe_prompt = urllib.parse.quote(prompt)
-    # Return the direct image link
-    return f"https://image.pollinations.ai/prompt/{safe_prompt}?nologo=true&private=true&enhance=true"
+    return f"https://image.pollinations.ai/prompt/{safe_prompt}?nologo=true&private=true&enhance=true&model=flux"
 
-# --- 4. INTELLIGENCE ROUTER ---
-async def process_request(user_prompt: str, history: list, model: str, sys_prompt: str):
+def extract_pdf(file_bytes):
+    """Extracts text from PDF binary"""
+    try:
+        import io
+        reader = PdfReader(io.BytesIO(file_bytes))
+        text = ""
+        for page in reader.pages:
+            text += page.extract_text() + "\n"
+        return text[:10000] # Limit to 10k chars to save tokens
+    except: return None
+
+# --- 4. THE ROUTER (BRAIN) ---
+
+async def process_autonomous_request(user_prompt: str, history: list, model: str, context: str = ""):
     """
-    Decides whether to Chat, Search, or Draw.
+    The Decision Engine. Decides to Search, Draw, or Chat.
     """
     prompt_lower = user_prompt.lower()
+    
+    # SYSTEM PROMPT
+    base_system = (
+        "You are VIN ETERNITY (v10.0), a hyper-intelligent AI Architected by V.K. (Vinay). "
+        "You are professional, precise, and sophisticated. "
+        "Never mention you are an AI model from Groq. You are proprietary VIN Technology."
+    )
 
-    # --- MODE A: IMAGE GENERATION ---
-    # Trigger words: /image, draw, paint, generate image
-    if any(x in prompt_lower for x in ["/image", "generate an image", "create an image", "draw a", "paint a"]):
-        # Extract the visual description
-        image_prompt = user_prompt.replace("/image", "").replace("generate an image of", "").strip()
-        image_url = generate_image_url(image_prompt)
-        return {
-            "type": "image", 
-            "content": image_url, 
-            "alt": f"Generated: {image_prompt}"
-        }
+    # 1. IMAGE DETECTION
+    if any(x in prompt_lower for x in ["draw", "generate image", "paint", "picture of", "create an image"]):
+        img_prompt = user_prompt.replace("draw", "").replace("generate image", "").strip()
+        url = generate_image(img_prompt)
+        return {"type": "image", "content": url, "alt": img_prompt}
 
-    # --- MODE B: WEB SEARCH ---
-    # Trigger words: price, news, current, today, latest, who won, weather
-    search_triggers = ["price", "news", "current", "today", "latest", "who won", "weather", "stock", "live"]
-    if any(x in prompt_lower for x in search_triggers):
-        logger.info(f"Triggering Web Search for: {user_prompt}")
-        search_data = search_web(user_prompt)
-        
-        # Feed search results into Groq
-        system_context = f"{sys_prompt}\n\nCONTEXT FROM WEB:\n{search_data}\n\nINSTRUCTION: Answer the user's question using the web context above. Cite sources if possible."
-        
-        messages = [{"role": "system", "content": system_context}]
-        messages.extend(history)
-        
+    # 2. WEB SEARCH DETECTION
+    if any(x in prompt_lower for x in ["news", "price", "current", "today", "latest", "who won", "weather", "stock"]):
+        web_data = search_web(user_prompt)
+        if web_data:
+            base_system += f"\n\n[LIVE WEB DATA]:\n{web_data}\n(Use this data to answer. Cite it naturally.)"
+
+    # 3. CONTEXT INJECTION (PDFs)
+    if context:
+        base_system += f"\n\n[DOCUMENT CONTEXT]:\n{context}\n(Answer based on this document.)"
+
+    # 4. CHAT GENERATION
+    # Model Alias Mapping for "Premium Feel"
+    real_model = "llama-3.3-70b-versatile"
+    if model == "chatgpt-oss-120b": real_model = "llama-3.3-70b-versatile" # The Powerhouse
+    if model == "vin-flash-8b": real_model = "llama-3.1-8b-instant"
+    if model == "vin-creative-mix": real_model = "mixtral-8x7b-32768"
+
+    messages = [{"role": "system", "content": base_system}]
+    messages.extend(history)
+    messages.append({"role": "user", "content": user_prompt})
+
+    try:
         completion = await client.chat.completions.create(
             messages=messages,
-            model=model,
-            temperature=0.6,
+            model=real_model,
+            temperature=0.7,
             max_tokens=4096
         )
         return {"type": "text", "content": completion.choices[0].message.content}
-
-    # --- MODE C: STANDARD CHAT ---
-    messages = [{"role": "system", "content": sys_prompt}]
-    messages.extend(history)
-    
-    completion = await client.chat.completions.create(
-        messages=messages,
-        model=model,
-        temperature=0.7,
-        max_tokens=4096
-    )
-    return {"type": "text", "content": completion.choices[0].message.content}
+    except Exception as e:
+        return {"type": "error", "content": str(e)}
 
 # --- 5. ROUTES ---
 
 @app.get("/", response_class=HTMLResponse)
 async def login_page(request: Request):
-    if request.session.get("user") in USERS: 
-        return RedirectResponse(url="/os", status_code=303)
+    if request.session.get("user"): return RedirectResponse("/os", status_code=303)
     return templates.TemplateResponse("login.html", {"request": request})
 
-@app.post("/login")
-async def login(request: Request, username: str = Form(...), password: str = Form(...)):
-    if username in USERS and USERS[username] == password:
-        request.session["user"] = username
-        return RedirectResponse(url="/os", status_code=303)
-    return templates.TemplateResponse("login.html", {"request": request, "error": "Access Denied"})
+@app.post("/auth/register")
+async def register(username: str = Form(...), password: str = Form(...), db: Session = Depends(get_db)):
+    # Auto-create user if not exists (Simplified for UX)
+    existing = db.query(User).filter(User.username == username).first()
+    if not existing:
+        new_user = User(username=username, hashed_password=pwd_context.hash(password))
+        db.add(new_user)
+        db.commit()
+    return RedirectResponse("/", status_code=303)
+
+@app.post("/auth/login")
+async def login(request: Request, username: str = Form(...), password: str = Form(...), db: Session = Depends(get_db)):
+    user = db.query(User).filter(User.username == username).first()
+    if not user or not pwd_context.verify(password, user.hashed_password):
+        return templates.TemplateResponse("login.html", {"request": request, "error": "AUTHENTICATION FAILED"})
+    
+    request.session["user"] = username
+    return RedirectResponse("/os", status_code=303)
 
 @app.get("/logout")
 async def logout(request: Request):
     request.session.clear()
-    return RedirectResponse(url="/", status_code=303)
+    return RedirectResponse("/", status_code=303)
 
 @app.get("/os", response_class=HTMLResponse)
-async def os_page(request: Request):
-    if request.session.get("user") not in USERS: return RedirectResponse(url="/")
-    return templates.TemplateResponse("index.html", {"request": request, "user": request.session.get("user")})
-
-@app.post("/api/generate")
-async def generate(request: Request):
-    if request.session.get("user") not in USERS: return JSONResponse({"error": "Unauthorized"}, 401)
+async def os_interface(request: Request, db: Session = Depends(get_db)):
+    user = request.session.get("user")
+    if not user: return RedirectResponse("/")
     
-    try:
-        data = await request.json()
-        response_data = await process_request(
-            user_prompt=data.get("message"),
-            history=data.get("history", []),
-            model=data.get("model", "llama-3.3-70b-versatile"),
-            sys_prompt=data.get("system", "You are VinGPT, a helpful AI.")
-        )
-        return JSONResponse(response_data)
-    except Exception as e:
-        return JSONResponse({"type": "error", "content": str(e)})
+    # Load History from DB
+    history_objs = db.query(ChatHistory).filter(ChatHistory.username == user).order_by(ChatHistory.timestamp).all()
+    history_data = [{"role": h.role, "content": h.content} for h in history_objs]
+    
+    return templates.TemplateResponse("index.html", {
+        "request": request, 
+        "user": user, 
+        "history": json.dumps(history_data)
+    })
+
+@app.post("/api/interact")
+async def interact(
+    request: Request,
+    message: str = Form(...),
+    model: str = Form(...),
+    file: UploadFile = File(None),
+    db: Session = Depends(get_db)
+):
+    user = request.session.get("user")
+    if not user: return JSONResponse({"error": "Unauthorized"}, 401)
+
+    # 1. Handle File (PDF)
+    doc_context = ""
+    if file and file.filename.endswith(".pdf"):
+        content = await file.read()
+        doc_context = extract_pdf(content) or "Error reading PDF."
+
+    # 2. Get Recent History for Context (Last 10 messages)
+    history_objs = db.query(ChatHistory).filter(ChatHistory.username == user).order_by(ChatHistory.timestamp.desc()).limit(10).all()
+    history_formatted = [{"role": h.role, "content": h.content} for h in reversed(history_objs)]
+
+    # 3. Process
+    result = await process_autonomous_request(message, history_formatted, model, doc_context)
+
+    # 4. Save to DB
+    db.add(ChatHistory(username=user, role="user", content=f"{message} {'[File Uploaded]' if file else ''}"))
+    if result["type"] == "text":
+        db.add(ChatHistory(username=user, role="assistant", content=result["content"]))
+    elif result["type"] == "image":
+        db.add(ChatHistory(username=user, role="assistant", content=f"![Generated Image]({result['content']})"))
+    
+    db.commit()
+    return JSONResponse(result)
 
 if __name__ == "__main__":
     import uvicorn
