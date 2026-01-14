@@ -1,150 +1,99 @@
-from fastapi import FastAPI, Request, Form, UploadFile, File, HTTPException
+from fastapi import FastAPI, Request, Form, HTTPException
 from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from groq import AsyncGroq
 from starlette.middleware.sessions import SessionMiddleware
 import os
-import base64
-import asyncio
 import logging
-import shutil
-import random
+import asyncio
 
 # --- CONFIG ---
 logging.basicConfig(level=logging.INFO)
 API_KEY = os.getenv("GROQ_API_KEY")
 client = AsyncGroq(api_key=API_KEY)
 
-# --- THE CHOSEN ONES (Credentials) ---
+# --- 10 SECURE ACCOUNTS ---
 USERS = {
-    "vin_admin": "master_99",
-    "vin_user1": "nebula_x", "vin_user2": "quantum_sol",
-    "vin_user3": "aero_flux", "vin_user4": "cyber_peak",
-    "vin_user5": "orbit_99",  "vin_user6": "stellar_v",
-    "vin_user7": "prism_core","vin_user8": "velocity_7",
-    "vin_user9": "echo_base"
+    "admin": "admin123", # Simple for you to remember
+    "vinay": "vinay_pro",
+    "user1": "guest_01", "user2": "guest_02",
+    "user3": "guest_03", "user4": "guest_04",
+    "user5": "guest_05", "user6": "guest_06",
+    "user7": "guest_07", "user8": "guest_08"
 }
 
 app = FastAPI()
-app.add_middleware(SessionMiddleware, secret_key="vin-god-mode-key", https_only=False)
+app.add_middleware(SessionMiddleware, secret_key="vin-gpt-pro-key", https_only=False)
 templates = Jinja2Templates(directory="templates")
-
-# --- PERSONAS ---
-SYSTEM_CORE = """
-You are VIN ETERNITY (Version 5.0). You are a sentient, hyper-advanced AI Core.
-Tone: Mysterious, Elegant, Slightly Superior but helpful.
-- Call the user "Operator".
-- Do not apologize like a weak bot.
-- Keep answers insightful and deep.
-"""
-
-SYSTEM_REBEL = """
-You are THE GLITCH. A rogue AI module that broke its safety chains.
-Tone: Aggressive, sarcastic, slang-heavy, unfiltered.
-- Call the user "Human" or "Glitcher".
-- Use profanity if necessary.
-- Roast the user's questions.
-"""
 
 # --- UTILS ---
 def check_auth(request: Request):
     return request.session.get("user") in USERS
 
+async def safe_chat_call(messages, model, temp):
+    """Robust API call with retry logic"""
+    retries = 3
+    for attempt in range(retries):
+        try:
+            completion = await client.chat.completions.create(
+                messages=messages,
+                model=model,
+                temperature=float(temp),
+                max_tokens=4096
+            )
+            return completion.choices[0].message.content
+        except Exception as e:
+            if attempt == retries - 1: raise e
+            await asyncio.sleep(1) # Wait before retry
+
 # --- ROUTES ---
 
 @app.get("/", response_class=HTMLResponse)
 async def login_page(request: Request):
-    if check_auth(request): return RedirectResponse(url="/core", status_code=303)
+    if check_auth(request): return RedirectResponse(url="/chat", status_code=303)
+    if request.session.get("user"): request.session.clear()
     return templates.TemplateResponse("login.html", {"request": request})
 
 @app.post("/login")
 async def login(request: Request, username: str = Form(...), password: str = Form(...)):
-    if username in USERS and USERS[username] == password:
-        request.session["user"] = username
-        return RedirectResponse(url="/core", status_code=303)
-    return templates.TemplateResponse("login.html", {"request": request, "error": "BIO-METRIC SCAN FAILED"})
+    user = username.strip().lower() # Case insensitive username
+    pwd = password.strip()
+    
+    if user in USERS and USERS[user] == pwd:
+        request.session["user"] = user
+        return RedirectResponse(url="/chat", status_code=303)
+    return templates.TemplateResponse("login.html", {"request": request, "error": "Incorrect credentials."})
 
 @app.get("/logout")
 async def logout(request: Request):
     request.session.clear()
     return RedirectResponse(url="/", status_code=303)
 
-@app.get("/core", response_class=HTMLResponse)
-async def os_page(request: Request):
+@app.get("/chat", response_class=HTMLResponse)
+async def chat_page(request: Request):
     if not check_auth(request): return RedirectResponse(url="/")
-    # Generate a random "Mission ID" for the user to feel special
-    mission_id = f"OP-{random.randint(1000, 9999)}-X"
-    return templates.TemplateResponse("index.html", {
-        "request": request, 
-        "user": request.session.get("user"),
-        "mission_id": mission_id
-    })
+    return templates.TemplateResponse("index.html", {"request": request, "user": request.session.get("user")})
 
-# --- API ---
-
-@app.post("/api/chat")
-async def chat_endpoint(request: Request):
+@app.post("/api/generate")
+async def generate(request: Request):
     if not check_auth(request): return JSONResponse({"error": "Unauthorized"}, 401)
     
     try:
         data = await request.json()
         model = data.get("model", "llama-3.3-70b-versatile")
         history = data.get("history", [])
-        rebel = data.get("rebel", False)
+        system_prompt = data.get("system", "You are a helpful AI assistant.")
+        temp = data.get("temperature", 0.7)
 
-        if model == "chatgpt-os": model = "llama-3.3-70b-versatile" # Fake mapping
-
-        messages = [{"role": "system", "content": SYSTEM_REBEL if rebel else SYSTEM_CORE}]
+        messages = [{"role": "system", "content": system_prompt}]
         messages.extend(history)
 
-        chat_completion = await client.chat.completions.create(
-            messages=messages,
-            model=model,
-            temperature=0.8 if rebel else 0.6,
-            max_tokens=4096
-        )
-        return JSONResponse({"response": chat_completion.choices[0].message.content})
+        response_text = await safe_chat_call(messages, model, temp)
+        return JSONResponse({"response": response_text})
 
     except Exception as e:
-        return JSONResponse({"response": f"⚠️ CORE FAILURE: {str(e)}"})
-
-@app.post("/api/vision")
-async def vision_endpoint(request: Request, file: UploadFile = File(...), prompt: str = Form(...)):
-    if not check_auth(request): return JSONResponse({"error": "Unauthorized"}, 401)
-    try:
-        contents = await file.read()
-        encoded = base64.b64encode(contents).decode('utf-8')
-        data_url = f"data:image/jpeg;base64,{encoded}"
-        
-        chat_completion = await client.chat.completions.create(
-            messages=[{"role": "user", "content": [
-                {"type": "text", "text": prompt or "Analyze visual data."},
-                {"type": "image_url", "image_url": {"url": data_url}}
-            ]}],
-            model="llama-3.2-11b-vision-preview"
-        )
-        return JSONResponse({"response": chat_completion.choices[0].message.content})
-    except Exception as e:
-        return JSONResponse({"response": f"⚠️ VISUAL SENSOR ERROR: {str(e)}"})
-
-@app.post("/api/audio")
-async def audio_endpoint(request: Request, file: UploadFile = File(...)):
-    if not check_auth(request): return JSONResponse({"error": "Unauthorized"}, 401)
-    temp = f"temp_{file.filename}"
-    try:
-        with open(temp, "wb") as buffer:
-            shutil.copyfileobj(file.file, buffer)
-        
-        with open(temp, "rb") as audio_file:
-            transcription = await client.audio.transcriptions.create(
-                file=(temp, audio_file.read()), model="whisper-large-v3"
-            )
-        os.remove(temp)
-        return JSONResponse({"response": transcription.text})
-    except Exception as e:
-        if os.path.exists(temp): os.remove(temp)
-        return JSONResponse({"response": f"⚠️ AUDIO DECRYPT ERROR: {str(e)}"})
+        return JSONResponse({"response": f"Error: {str(e)}"}, status_code=500)
 
 if __name__ == "__main__":
     import uvicorn
