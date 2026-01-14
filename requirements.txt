@@ -4,9 +4,4 @@ python-multipart
 jinja2
 groq
 itsdangerous
-pydantic
-duckduckgo-search
-pypdf
-sqlalchemy
-passlib
-bcrypt
+aiofiles

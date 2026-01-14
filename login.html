@@ -3,55 +3,71 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VIN ETERNITY | GATE</title>
+    <title>VIN PRESTIGE</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&display=swap" rel="stylesheet">
     <style>
-        body { background: #000; font-family: 'Cinzel', serif; color: white; overflow: hidden; }
-        .card { background: rgba(255,255,255,0.05); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1); }
-        input { background: rgba(0,0,0,0.5); border: 1px solid #333; outline: none; transition: 0.3s; }
-        input:focus { border-color: #6366f1; }
+        body { background: black; color: white; overflow: hidden; display: flex; align-items: center; justify-content: center; height: 100vh; font-family: 'Courier New', monospace; }
+        
+        /* HYPERSPACE ANIMATION */
+        .star { position: absolute; width: 2px; height: 2px; background: white; opacity: 0; }
+        .warp .star { animation: warp 1s linear infinite; }
+        @keyframes warp { 0% { opacity: 0; transform: scale(1) translateZ(0); } 50% { opacity: 1; } 100% { opacity: 0; transform: scale(10) translateZ(500px); } }
+        
+        .fade-out { animation: fadeOut 1.5s forwards; }
+        @keyframes fadeOut { to { opacity: 0; transform: scale(1.1); } }
     </style>
 </head>
-<body class="h-screen flex items-center justify-center">
+<body id="body">
 
-    <div class="card p-10 rounded-xl w-full max-w-sm text-center shadow-2xl relative">
-        <h1 class="text-4xl font-bold mb-2">VIN<span class="text-indigo-500">ETERNITY</span></h1>
-        <p class="text-[10px] text-gray-500 tracking-[0.5em] mb-8">ARCHITECT: V.K.</p>
+    <div id="stars" class="absolute inset-0 z-0"></div>
 
-        <form action="/auth/login" method="post" id="loginForm" class="space-y-4">
-            <input type="text" name="username" placeholder="IDENTITY" required class="w-full p-3 text-white rounded text-center">
-            <input type="password" name="password" placeholder="PASSPHRASE" required class="w-full p-3 text-white rounded text-center">
+    <div id="loginBox" class="z-10 text-center p-8 border border-white/20 bg-black/80 backdrop-blur-md rounded-2xl w-full max-w-xs relative">
+        <h1 class="text-3xl font-bold mb-1 tracking-widest">VIN<span class="text-purple-500">PRESTIGE</span></h1>
+        <p class="text-[10px] text-gray-500 mb-8 uppercase tracking-[0.3em]">Architect: V.K.</p>
+
+        <form onsubmit="handleLogin(event)" class="space-y-4">
+            <input type="text" id="user" name="username" placeholder="IDENTITY" required class="w-full bg-transparent border-b border-gray-600 p-2 text-center outline-none focus:border-purple-500 transition">
+            <input type="password" id="pass" name="password" placeholder="KEY" required class="w-full bg-transparent border-b border-gray-600 p-2 text-center outline-none focus:border-purple-500 transition">
             
-            <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3 rounded transition tracking-widest">
-                ACCESS
+            <button type="submit" class="w-full mt-6 bg-white/10 hover:bg-purple-600 text-white py-3 rounded text-xs font-bold uppercase tracking-widest transition duration-500">
+                Initiate Link
             </button>
         </form>
 
-        <div class="my-6 border-t border-white/10 relative">
-            <span class="absolute top-[-10px] left-1/2 transform -translate-x-1/2 bg-black px-2 text-[10px] text-gray-500">OR REGISTER</span>
-        </div>
-
-        <button onclick="submitRegister()" class="w-full border border-white/20 hover:bg-white/5 text-gray-400 py-2 rounded text-xs tracking-widest transition">
-            CREATE NEW IDENTITY
-        </button>
-
         {% if error %}
-        <div class="mt-6 text-red-500 text-xs border border-red-900/50 p-2 bg-red-900/10 rounded">
-            ⚠ {{ error }}
-        </div>
+        <div class="mt-4 text-red-500 text-xs">{{ error }}</div>
         {% endif %}
     </div>
 
     <script>
-        function submitRegister() {
-            const form = document.getElementById('loginForm');
-            if(form.username.value === "" || form.password.value === "") {
-                alert("Please enter a Username and Password to Register.");
-                return;
+        function handleLogin(e) {
+            e.preventDefault();
+            const btn = document.querySelector('button');
+            const box = document.getElementById('loginBox');
+            const stars = document.getElementById('stars');
+            
+            // 1. UI Feedback
+            btn.innerText = "AUTHENTICATING...";
+            btn.classList.add('bg-purple-600');
+            
+            // 2. Start Animation
+            box.classList.add('fade-out');
+            stars.classList.add('warp');
+            
+            // Create Stars
+            for(let i=0; i<100; i++) {
+                let s = document.createElement('div');
+                s.className = 'star';
+                s.style.top = Math.random() * 100 + 'vh';
+                s.style.left = Math.random() * 100 + 'vw';
+                s.style.animationDelay = Math.random() + 's';
+                stars.appendChild(s);
             }
-            form.action = "/auth/register";
-            form.submit();
+
+            // 3. Submit after delay
+            setTimeout(() => {
+                e.target.submit();
+            }, 1200); // 1.2 second delay for effect
         }
     </script>
 </body>

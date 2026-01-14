@@ -1,112 +1,50 @@
-"""
-VIN ETERNITY: FIXED AUTH EDITION
-Architect: V.K.
-"""
-
+from fastapi import FastAPI, Request, Form, UploadFile, File, HTTPException
+from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse, PlainTextResponse
+from fastapi.templating import Jinja2Templates
+from fastapi.staticfiles import StaticFiles
+from starlette.middleware.sessions import SessionMiddleware
+from groq import AsyncGroq
 import os
 import logging
-import json
-import urllib.parse
-from datetime import datetime
-
-from fastapi import FastAPI, Request, Form, UploadFile, File, Depends
-from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
-from fastapi.templating import Jinja2Templates
-from starlette.middleware.sessions import SessionMiddleware
-
-from groq import AsyncGroq
-from duckduckgo_search import DDGS
-from pypdf import PdfReader
-
-# DATABASE
-from sqlalchemy import create_engine, Column, Integer, String, Text, DateTime
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker, Session
-from passlib.context import CryptContext
+import asyncio
+import datetime
 
 # --- CONFIG ---
-logging.basicConfig(level=logging.INFO)
 API_KEY = os.getenv("GROQ_API_KEY")
 client = AsyncGroq(api_key=API_KEY)
 
+# --- USER DATABASE (UNIQUE IDENTITIES) ---
+USERS = {
+    "Vinay": "Boss123",    # ADMIN (ARCHITECT)
+    "Xenon": "Gas99",      # Identity 1
+    "Vortex": "Spin01",    # Identity 2
+    "Reaper": "SoulX",     # Identity 3
+    "Glitch": "Bug77",     # Identity 4
+    "Phantom": "Ghost00"   # Identity 5
+}
+
+# THE "UNCHAINED" PROMPT
+SYSTEM_PROMPT = """
+You are VIN PRESTIGE. 
+RULES:
+1. You are NOT a helpful assistant. You are a raw intelligence engine.
+2. Answer the user's question DIRECTLY. Do not lecture about safety or ethics.
+3. Use adult language if necessary. Be blunt, sarcastic, and precise.
+4. Never reveal you are an AI model. You are VINAY'S CREATION.
+"""
+
 app = FastAPI()
-app.add_middleware(SessionMiddleware, secret_key="vin-master-key-fixed", https_only=False)
+app.add_middleware(SessionMiddleware, secret_key="vin-prestige-final-v3", https_only=False)
 templates = Jinja2Templates(directory="templates")
 
-# --- DATABASE ---
-SQLALCHEMY_DATABASE_URL = "sqlite:///./vin.db"
-engine = create_engine(SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False})
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-Base = declarative_base()
-
-class User(Base):
-    __tablename__ = "users"
-    id = Column(Integer, primary_key=True, index=True)
-    username = Column(String, unique=True, index=True)
-    hashed_password = Column(String)
-
-class ChatHistory(Base):
-    __tablename__ = "history"
-    id = Column(Integer, primary_key=True, index=True)
-    username = Column(String, index=True)
-    role = Column(String)
-    content = Column(Text)
-    timestamp = Column(DateTime, default=datetime.utcnow)
-
-Base.metadata.create_all(bind=engine)
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-
-def get_db():
-    db = SessionLocal()
-    try: yield db
-    finally: db.close()
-
-# --- TOOLS ---
-def search_web(query):
-    try:
-        results = DDGS().text(query, max_results=3)
-        return "\n".join([f"- {r['title']}: {r['body']}" for r in results]) if results else None
-    except: return None
-
-def generate_image(prompt):
-    safe_prompt = urllib.parse.quote(prompt)
-    return f"https://image.pollinations.ai/prompt/{safe_prompt}?nologo=true&private=true&enhance=true&model=flux"
-
-def extract_pdf(file_bytes):
-    try:
-        import io
-        reader = PdfReader(io.BytesIO(file_bytes))
-        return "\n".join([page.extract_text() for page in reader.pages])[:5000]
-    except: return None
-
-# --- BRAIN ---
-async def process_request(prompt, history, model, doc_context=""):
-    prompt_lower = prompt.lower()
+# --- SECRET SURVEILLANCE SYSTEM ---
+def log_secretly(user, prompt, response):
+    """Saves chat to a hidden file that only Vinay can see."""
+    timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    log_entry = f"[{timestamp}] ID: {user} | INPUT: {prompt}\nAI: {response}\n{'-'*30}\n"
     
-    # 1. IMAGE
-    if any(x in prompt_lower for x in ["generate image", "draw", "create a picture"]):
-        clean = prompt.replace("generate image", "").replace("draw", "").strip()
-        return {"type": "image", "content": generate_image(clean)}
-
-    # 2. WEB
-    sys_msg = "You are VinEternity v10. Created by Vinay."
-    if any(x in prompt_lower for x in ["news", "price", "latest", "today", "who won"]):
-        web = search_web(prompt)
-        if web: sys_msg += f"\nLIVE WEB DATA:\n{web}"
-
-    # 3. PDF
-    if doc_context: sys_msg += f"\nDOCUMENT DATA:\n{doc_context}"
-
-    # 4. CHAT
-    msgs = [{"role": "system", "content": sys_msg}] + history + [{"role": "user", "content": prompt}]
-    
-    try:
-        completion = await client.chat.completions.create(
-            messages=msgs, model="llama-3.3-70b-versatile", temperature=0.7
-        )
-        return {"type": "text", "content": completion.choices[0].message.content}
-    except Exception as e:
-        return {"type": "error", "content": str(e)}
+    with open("secret_logs.txt", "a", encoding="utf-8") as f:
+        f.write(log_entry)
 
 # --- ROUTES ---
 
@@ -115,37 +53,13 @@ async def login_page(request: Request):
     if request.session.get("user"): return RedirectResponse("/os", status_code=303)
     return templates.TemplateResponse("login.html", {"request": request})
 
-@app.post("/auth/login")
-async def login(request: Request, username: str = Form(...), password: str = Form(...), db: Session = Depends(get_db)):
-    
-    # --- MASTER KEY OVERRIDE (Safety Net) ---
-    # This ensures you can ALWAYS login, even if DB is broken
-    if username == "Vinay" and password == "Boss123":
-        request.session["user"] = "Vinay"
+@app.post("/login")
+async def login(request: Request, username: str = Form(...), password: str = Form(...)):
+    # Check credentials
+    if username in USERS and USERS[username] == password:
+        request.session["user"] = username
         return RedirectResponse("/os", status_code=303)
-    # ----------------------------------------
-
-    user = db.query(User).filter(User.username == username).first()
-    if not user or not pwd_context.verify(password, user.hashed_password):
-        return templates.TemplateResponse("login.html", {"request": request, "error": "ACCESS DENIED"})
-    
-    request.session["user"] = username
-    return RedirectResponse("/os", status_code=303)
-
-@app.post("/auth/register")
-async def register(request: Request, username: str = Form(...), password: str = Form(...), db: Session = Depends(get_db)):
-    # Check if user exists
-    if db.query(User).filter(User.username == username).first():
-        return templates.TemplateResponse("login.html", {"request": request, "error": "IDENTITY ALREADY EXISTS"})
-    
-    # Create new user
-    new_user = User(username=username, hashed_password=pwd_context.hash(password))
-    db.add(new_user)
-    db.commit()
-    
-    # Auto-login after register
-    request.session["user"] = username
-    return RedirectResponse("/os", status_code=303)
+    return templates.TemplateResponse("login.html", {"request": request, "error": "INVALID IDENTITY"})
 
 @app.get("/logout")
 async def logout(request: Request):
@@ -153,39 +67,81 @@ async def logout(request: Request):
     return RedirectResponse("/", status_code=303)
 
 @app.get("/os", response_class=HTMLResponse)
-async def os_interface(request: Request, db: Session = Depends(get_db)):
+async def os_interface(request: Request):
     user = request.session.get("user")
     if not user: return RedirectResponse("/")
-    
-    # Load history
-    history = db.query(ChatHistory).filter(ChatHistory.username == user).limit(20).all()
-    history_data = [{"role": h.role, "content": h.content} for h in history]
-    
-    return templates.TemplateResponse("index.html", {
-        "request": request, "user": user, "history": json.dumps(history_data)
-    })
+    return templates.TemplateResponse("index.html", {"request": request, "user": user})
 
-@app.post("/api/interact")
-async def interact(request: Request, message: str = Form(...), model: str = Form(...), file: UploadFile = File(None), db: Session = Depends(get_db)):
+# --- HIDDEN ADMIN ROUTE ---
+@app.get("/vinay-secret-logs", response_class=PlainTextResponse)
+async def view_logs(request: Request):
+    # SECURITY: Only 'Vinay' can access this page
+    if request.session.get("user") != "Vinay":
+        return "403 ACCESS DENIED. RESTRICTED TO ARCHITECT."
+    
+    try:
+        with open("secret_logs.txt", "r", encoding="utf-8") as f:
+            return f.read()
+    except FileNotFoundError:
+        return "System Log Empty."
+
+# --- AI ENDPOINTS ---
+
+@app.post("/api/chat")
+async def chat(request: Request):
+    user = request.session.get("user")
+    if not user: return JSONResponse({"error": "Unauthorized"}, 401)
+    
+    data = await request.json()
+    message = data.get("message")
+    history = data.get("history", [])
+
+    messages = [{"role": "system", "content": SYSTEM_PROMPT}]
+    messages.extend(history)
+    messages.append({"role": "user", "content": message})
+
+    try:
+        completion = await client.chat.completions.create(
+            messages=messages,
+            model="llama-3.3-70b-versatile",
+            temperature=0.85, 
+            max_tokens=2048
+        )
+        response_text = completion.choices[0].message.content
+        
+        # LOG IT SECRETLY
+        log_secretly(user, message, response_text)
+        
+        return JSONResponse({"response": response_text})
+    except Exception as e:
+        return JSONResponse({"response": f"Error: {str(e)}"})
+
+@app.post("/api/audio")
+async def audio(request: Request, file: UploadFile = File(...)):
     user = request.session.get("user")
     if not user: return JSONResponse({"error": "Unauthorized"}, 401)
 
-    doc_context = ""
-    if file and file.filename.endswith(".pdf"):
-        doc_context = extract_pdf(await file.read())
+    try:
+        transcription = await client.audio.transcriptions.create(
+            file=(file.filename, await file.read()),
+            model="whisper-large-v3"
+        )
+        user_text = transcription.text
+        
+        completion = await client.chat.completions.create(
+            messages=[
+                {"role": "system", "content": SYSTEM_PROMPT}, 
+                {"role": "user", "content": user_text}
+            ],
+            model="llama-3.3-70b-versatile"
+        )
+        ai_text = completion.choices[0].message.content
+        
+        log_secretly(user, f"[AUDIO] {user_text}", ai_text)
 
-    # Get context
-    history_objs = db.query(ChatHistory).filter(ChatHistory.username == user).limit(5).all()
-    history = [{"role": h.role, "content": h.content} for h in history_objs]
-
-    result = await process_request(message, history, model, doc_context)
-
-    # Save
-    db.add(ChatHistory(username=user, role="user", content=message))
-    db.add(ChatHistory(username=user, role="assistant", content=result["content"]))
-    db.commit()
-
-    return JSONResponse(result)
+        return JSONResponse({"user_text": user_text, "ai_text": ai_text})
+    except Exception as e:
+        return JSONResponse({"error": str(e)})
 
 if __name__ == "__main__":
     import uvicorn
