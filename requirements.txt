@@ -3,5 +3,4 @@ uvicorn
 python-multipart
 jinja2
 groq
-itsdangerous
 aiofiles
