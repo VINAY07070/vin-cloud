@@ -2,292 +2,271 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VIN OS | Workspace</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>VIN ETERNITY | ENGINE</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/9.1.2/marked.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Inter', sans-serif; background: #050505; color: #e5e5e5; }
-        .scrollbar-hide::-webkit-scrollbar { display: none; }
-        .glass-panel { background: rgba(20, 20, 20, 0.8); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.08); }
-        .msg-user { background: #2563eb; color: white; box-shadow: 0 4px 15px rgba(37, 99, 235, 0.2); }
-        .msg-ai { background: #1a1a1a; border: 1px solid #333; color: #e0e0e0; }
-        .msg-error { background: #450a0a; border: 1px solid #7f1d1d; color: #fca5a5; }
-        .typing-dot { animation: bounce 1.4s infinite ease-in-out both; }
-        @keyframes bounce { 0%, 80%, 100% { transform: scale(0); } 40% { transform: scale(1); } }
+        /* CORE AESTHETICS */
+        body { font-family: 'Rajdhani', sans-serif; background: #000; color: #fff; overflow: hidden; cursor: crosshair; }
+        .mono { font-family: 'Share Tech Mono', monospace; }
+        
+        /* PARALLAX BG */
+        #starfield { position: absolute; top: -50%; left: -50%; width: 200%; height: 200%; background-image: radial-gradient(white 1px, transparent 1px); background-size: 50px 50px; opacity: 0.1; z-index: 0; transition: transform 0.1s ease-out; }
+
+        /* MESSAGE STYLES */
+        .msg-user { background: rgba(0, 255, 255, 0.1); border: 1px solid #00ffff; color: #00ffff; border-radius: 12px 0 12px 12px; box-shadow: 0 0 10px rgba(0,255,255,0.1); }
+        .msg-ai { background: rgba(0, 0, 0, 0.8); border-left: 3px solid #fff; padding-left: 15px; color: #ccc; font-family: 'Share Tech Mono', monospace; font-size: 14px; }
+        
+        /* REBEL MODE */
+        .rebel .msg-ai { border-left-color: #ff0000; color: #ff9999; }
+        .rebel-glow { box-shadow: 0 0 20px rgba(255, 0, 0, 0.3) !important; border-color: #ff0000 !important; }
+
+        /* DECRYPT EFFECT CURSOR */
+        .cursor { display: inline-block; width: 8px; height: 16px; background: #0ff; animation: blink 1s infinite; }
     </style>
 </head>
-<body class="h-screen flex overflow-hidden selection:bg-blue-500/30">
+<body class="h-screen flex flex-col relative">
 
-    <div class="w-72 bg-black border-r border-white/10 flex flex-col hidden md:flex z-20">
-        <div class="p-6 border-b border-white/10">
-            <div class="flex items-center gap-3">
-                <div class="w-3 h-3 bg-blue-500 rounded-full shadow-[0_0_15px_rgba(59,130,246,1)] animate-pulse"></div>
-                <h1 class="text-xl font-bold tracking-tight text-white">VIN <span class="text-gray-600">OS</span></h1>
-            </div>
+    <div id="starfield"></div>
+
+    <div class="h-16 border-b border-white/10 flex justify-between items-center px-6 bg-black/80 backdrop-blur-md z-50 relative">
+        <div class="flex flex-col">
+            <h1 class="text-2xl font-bold tracking-[4px]">VIN<span class="text-cyan-400">ETERNITY</span></h1>
+            <span class="text-[9px] text-gray-500 mono tracking-widest">OP: {{ user }} // ID: {{ mission_id }}</span>
         </div>
-
-        <div class="p-5 space-y-6">
-            <div>
-                <label class="text-[10px] text-gray-500 uppercase font-bold tracking-widest ml-1">Neural Engine</label>
-                <div class="relative mt-2">
-                    <select id="modelSelect" class="w-full bg-[#111] border border-white/10 text-gray-300 text-sm rounded-lg p-3 appearance-none focus:outline-none focus:border-blue-500 transition-colors cursor-pointer">
-                        <optgroup label="Core Intelligence">
-                            <option value="llama-3.3-70b-versatile">VIN TITAN (Genius)</option>
-                            <option value="llama-3.1-8b-instant">VIN FLASH (Instant)</option>
-                            <option value="mixtral-8x7b-32768">VIN FLUX (Creative)</option>
-                        </optgroup>
-                        <optgroup label="Sensory Modules">
-                            <option value="vision">VIN OCULUS (Vision)</option>
-                            <option value="audio">VIN VOX (Audio)</option>
-                        </optgroup>
-                    </select>
-                    <div class="absolute right-3 top-3.5 pointer-events-none text-gray-500">▼</div>
-                </div>
-            </div>
-
-            <div class="bg-[#111] rounded-xl p-4 border border-white/5 space-y-3">
-                <div class="text-[10px] text-gray-500 uppercase font-bold tracking-widest mb-2">Session Data</div>
-                <div class="flex justify-between text-xs"><span class="text-gray-500">User</span> <span class="text-white font-mono">{{ user }}</span></div>
-                <div class="flex justify-between text-xs"><span class="text-gray-500">Status</span> <span class="text-green-500 flex items-center gap-1">● Online</span></div>
-            </div>
-            
-            <button onclick="clearHistory()" class="w-full text-left px-4 py-3 text-xs font-medium text-red-400 hover:bg-red-500/10 rounded-lg transition-colors flex items-center gap-2">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-                Format Memory
+        
+        <div class="flex items-center gap-4">
+            <button id="voiceBtn" onclick="toggleVoice()" class="text-[10px] border border-gray-600 px-3 py-1 rounded text-gray-400 hover:text-white transition">
+                VOICE: OFF
             </button>
-        </div>
+            
+            <button id="rebelBtn" onclick="toggleRebel()" class="text-[10px] border border-cyan-600 px-3 py-1 rounded text-cyan-400 hover:bg-cyan-900/30 transition">
+                MODE: CORE
+            </button>
 
-        <div class="mt-auto p-5 border-t border-white/10">
-             <a href="/logout" class="flex items-center gap-3 text-sm text-gray-400 hover:text-white transition-colors group">
-                <div class="p-2 rounded-lg bg-white/5 group-hover:bg-white/10 transition-colors">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
-                </div>
-                <span>Terminte Session</span>
-            </a>
+            <a href="/logout" class="text-xs text-red-500 hover:text-red-300">LOGOUT</a>
         </div>
     </div>
 
-    <div class="flex-1 flex flex-col relative bg-[#09090b] w-full">
-        
-        <div class="md:hidden p-4 border-b border-white/10 flex justify-between items-center bg-black/50 backdrop-blur-md sticky top-0 z-50">
-            <h1 class="font-bold text-white">VIN OS</h1>
-            <a href="/logout" class="text-xs text-red-400">Logout</a>
-        </div>
-
-        <div id="chatFeed" class="flex-1 overflow-y-auto p-4 md:p-8 space-y-6 pb-40 scrollbar-hide scroll-smooth">
-            <div class="h-full flex flex-col items-center justify-center text-center opacity-50" id="welcomeScreen">
-                <div class="w-16 h-16 bg-gradient-to-tr from-blue-600 to-purple-600 rounded-2xl mb-6 shadow-2xl shadow-blue-900/50 flex items-center justify-center text-2xl">💠</div>
-                <h2 class="text-3xl font-bold text-white mb-2">System Ready</h2>
-                <p class="text-gray-400 max-w-sm">Initialized for {{ user }}. <br>Upload images or audio for analysis.</p>
+    <div id="chatFeed" class="flex-1 overflow-y-auto p-4 md:p-8 space-y-6 pb-32 z-10 scroll-smooth relative">
+        <div id="intro" class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none opacity-50">
+            <div class="w-20 h-20 border border-cyan-500 rounded-full flex items-center justify-center animate-pulse mb-4">
+                <div class="w-16 h-16 bg-cyan-500/20 rounded-full"></div>
             </div>
+            <h2 class="text-xl mono text-cyan-500">SYSTEM INITIALIZED</h2>
+            <p class="text-xs text-gray-500 mt-2">WAITING FOR OPERATOR INPUT...</p>
         </div>
+    </div>
 
-        <div class="absolute bottom-0 left-0 w-full p-4 md:p-6 bg-gradient-to-t from-black via-black/90 to-transparent z-40">
-            <div class="max-w-4xl mx-auto">
+    <div class="bg-black/90 border-t border-white/10 p-4 w-full absolute bottom-0 z-50">
+        <div class="max-w-4xl mx-auto flex flex-col gap-2">
+            
+            <select id="modelSelect" class="bg-black border border-white/10 text-[10px] text-gray-500 p-1 w-max outline-none focus:border-cyan-500">
+                <option value="llama-3.3-70b-versatile">VIN TITAN (LOGIC CORE)</option>
+                <option value="chatgpt-os">CHATGPT OS (PREMIUM)</option>
+                <option value="vision">VIN OCULUS (VISUAL)</option>
+                <option value="audio">VIN VOX (AUDITORY)</option>
+            </select>
+
+            <div id="inputBox" class="flex items-end gap-0 border border-white/20 bg-black transition-all">
+                <button onclick="document.getElementById('fileInput').click()" class="p-3 text-gray-500 hover:text-white">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+                </button>
+                <input type="file" id="fileInput" class="hidden" onchange="handleFile(this)">
                 
-                <div id="filePreview" class="hidden mb-3 inline-flex items-center gap-3 px-4 py-2 bg-blue-900/20 border border-blue-500/30 rounded-xl backdrop-blur-md">
-                    <div class="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
-                    <span id="fileName" class="text-xs text-blue-300 font-mono truncate max-w-[200px]">file.jpg</span>
-                    <button onclick="clearFile()" class="text-blue-400 hover:text-white ml-2">×</button>
-                </div>
-
-                <div class="glass-panel rounded-2xl p-2 flex items-end gap-2 shadow-2xl shadow-black/50">
-                    
-                    <button onclick="document.getElementById('fileInput').click()" class="p-3.5 text-gray-400 hover:text-white hover:bg-white/10 rounded-xl transition-all active:scale-95" title="Upload Image/Audio">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
-                    </button>
-                    <input type="file" id="fileInput" class="hidden" onchange="handleFileSelect(this)">
-
-                    <textarea id="userInput" rows="1" class="w-full bg-transparent text-white text-[15px] p-3.5 focus:outline-none resize-none max-h-32 placeholder-gray-600 leading-relaxed" placeholder="Enter command..."></textarea>
-                    
-                    <button onclick="sendMessage()" id="sendBtn" class="p-3.5 bg-blue-600 text-white rounded-xl hover:bg-blue-500 transition-all shadow-lg shadow-blue-900/30 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14M12 5l7 7-7 7"></path></svg>
-                    </button>
-                </div>
+                <textarea id="userInput" rows="1" class="w-full bg-transparent text-white text-base p-3 focus:outline-none resize-none mono" placeholder="Enter Command Sequence..."></textarea>
+                
+                <button onclick="send()" class="p-3 text-cyan-500 font-bold hover:bg-cyan-900/20 tracking-widest text-xs">SEND</button>
             </div>
         </div>
     </div>
 
     <script>
-        let chatHistory = [];
+        // --- CONFIG ---
+        let rebel = false;
+        let voice = false;
+        let history = [];
         let currentFile = null;
-        let isProcessing = false;
+        const synth = window.speechSynthesis;
 
-        // --- INIT ---
-        window.onload = () => {
-            const saved = localStorage.getItem('vin_history');
-            if (saved) {
-                try {
-                    chatHistory = JSON.parse(saved);
-                    if(chatHistory.length > 0) document.getElementById('welcomeScreen').style.display = 'none';
-                    chatHistory.forEach(msg => appendMessage(msg.role, msg.content, false));
-                } catch(e) { localStorage.removeItem('vin_history'); }
-            }
-        };
+        // --- MOUSE PARALLAX EFFECT ---
+        document.addEventListener('mousemove', (e) => {
+            const x = (window.innerWidth - e.pageX) / 50;
+            const y = (window.innerHeight - e.pageY) / 50;
+            document.getElementById('starfield').style.transform = `translate(${x}px, ${y}px)`;
+        });
 
-        // --- FILE HANDLING ---
-        function handleFileSelect(input) {
-            if (input.files && input.files[0]) {
-                currentFile = input.files[0];
-                document.getElementById('filePreview').classList.remove('hidden');
-                document.getElementById('fileName').innerText = currentFile.name;
-                
-                // Auto Switch
-                const select = document.getElementById('modelSelect');
-                if (currentFile.type.startsWith('image/')) select.value = 'vision';
-                else if (currentFile.type.startsWith('audio/')) select.value = 'audio';
-            }
+        // --- SOUND EFFECTS (Click) ---
+        function playClick() {
+            // Simple oscillator beep for "tech" feel
+            const ctx = new (window.AudioContext || window.webkitAudioContext)();
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.type = 'sine';
+            osc.frequency.value = 800;
+            gain.gain.exponentialRampToValueAtTime(0.00001, ctx.currentTime + 0.04);
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.start();
+            osc.stop(0.04);
         }
 
-        function clearFile() {
-            currentFile = null;
-            document.getElementById('fileInput').value = '';
-            document.getElementById('filePreview').classList.add('hidden');
-        }
-
-        function clearHistory() {
-            if(confirm("Purge all session memory?")) {
-                localStorage.removeItem('vin_history');
-                location.reload();
-            }
-        }
-
-        // --- CORE CHAT LOGIC ---
-        async function sendMessage() {
-            if (isProcessing) return; // Prevent double clicks
+        // --- TOGGLES ---
+        function toggleRebel() {
+            playClick();
+            rebel = !rebel;
+            const btn = document.getElementById('rebelBtn');
+            const box = document.getElementById('inputBox');
+            document.body.classList.toggle('rebel', rebel);
             
+            if(rebel) {
+                btn.innerText = "MODE: REBEL";
+                btn.classList.add('text-red-500', 'border-red-500');
+                box.classList.add('rebel-glow');
+            } else {
+                btn.innerText = "MODE: CORE";
+                btn.classList.remove('text-red-500', 'border-red-500');
+                box.classList.remove('rebel-glow');
+            }
+        }
+
+        function toggleVoice() {
+            playClick();
+            voice = !voice;
+            const btn = document.getElementById('voiceBtn');
+            btn.innerText = voice ? "VOICE: ON" : "VOICE: OFF";
+            btn.className = voice ? "text-[10px] border border-green-500 px-3 py-1 rounded text-green-400" : "text-[10px] border border-gray-600 px-3 py-1 rounded text-gray-400";
+        }
+
+        function speak(text) {
+            if(!voice) return;
+            synth.cancel();
+            const utter = new SpeechSynthesisUtterance(text);
+            utter.pitch = rebel ? 0.8 : 1; // Lower pitch for Rebel
+            utter.rate = 1.1;
+            synth.speak(utter);
+        }
+
+        // --- DECRYPTION TEXT EFFECT ---
+        function decryptText(element, text) {
+            let iterations = 0;
+            const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890@#$%^&*";
+            const interval = setInterval(() => {
+                element.innerText = text.split("").map((letter, index) => {
+                    if(index < iterations) return letter;
+                    return letters[Math.floor(Math.random() * 26)];
+                }).join("");
+                
+                if(iterations >= text.length) clearInterval(interval);
+                iterations += 1 / 2; // Speed
+            }, 30);
+        }
+
+        // --- CORE CHAT ---
+        function handleFile(input) {
+            if(input.files[0]) {
+                playClick();
+                currentFile = input.files[0];
+                const box = document.getElementById('userInput');
+                box.value = `[FILE ATTACHED: ${currentFile.name}]`;
+                const sel = document.getElementById('modelSelect');
+                if(currentFile.type.includes('image')) sel.value = 'vision';
+                if(currentFile.type.includes('audio')) sel.value = 'audio';
+            }
+        }
+
+        async function send() {
+            playClick();
             const input = document.getElementById('userInput');
-            const text = input.value.trim();
+            let txt = input.value.trim();
             const model = document.getElementById('modelSelect').value;
 
-            if (!text && !currentFile) return;
+            if(!txt && !currentFile) return;
+            if(txt.startsWith("[FILE ATTACHED")) txt = ""; // Clear file placeholder text
 
-            document.getElementById('welcomeScreen').style.display = 'none';
-            isProcessing = true;
-            document.getElementById('sendBtn').disabled = true;
-
-            // 1. Show User Msg
-            appendMessage('user', text || `[Uploaded: ${currentFile.name}]`, true);
+            document.getElementById('intro').style.display = 'none';
             input.value = '';
-            input.style.height = 'auto'; // Reset height
-            
-            // 2. Show Loading
-            const loadingId = 'load-' + Date.now();
-            appendLoading(loadingId);
+
+            // User Msg
+            appendMsg('user', txt || `[TRANSMITTING FILE: ${currentFile.name}]`);
+
+            // Loading
+            const loadId = 'load-'+Date.now();
+            appendLoading(loadId);
 
             try {
-                let responseText;
-
-                if (currentFile) {
-                    // --- UPLOAD MODE ---
-                    const formData = new FormData();
-                    formData.append('file', currentFile);
-                    if (text) formData.append('prompt', text);
-                    
-                    const endpoint = model === 'audio' ? '/api/audio' : '/api/vision';
-                    
-                    const res = await fetch(endpoint, { method: 'POST', body: formData });
-                    if(!res.ok) throw new Error("Server rejected file");
-                    
-                    const data = await res.json();
-                    responseText = data.response;
-                    clearFile();
+                let resp;
+                if(currentFile) {
+                    const fd = new FormData();
+                    fd.append('file', currentFile);
+                    if(txt) fd.append('prompt', txt);
+                    const ep = model === 'audio' ? '/api/audio' : '/api/vision';
+                    const r = await fetch(ep, {method:'POST', body:fd});
+                    const d = await r.json();
+                    resp = d.response;
+                    currentFile = null;
                 } else {
-                    // --- TEXT MODE ---
-                    const res = await fetch('/api/chat', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ 
-                            message: text, 
-                            history: chatHistory, 
-                            model: model 
+                    const r = await fetch('/api/chat', {
+                        method:'POST',
+                        headers:{'Content-Type':'application/json'},
+                        body:JSON.stringify({
+                            message:txt, history:history, model:model, rebel: rebel
                         })
                     });
-                    if(!res.ok) throw new Error("Neural Core Unreachable");
-                    
-                    const data = await res.json();
-                    responseText = data.response;
+                    const d = await r.json();
+                    resp = d.response;
                 }
 
-                // 3. Success
-                document.getElementById(loadingId).remove();
-                appendMessage('assistant', responseText, true);
+                document.getElementById(loadId).remove();
+                
+                // Add AI Msg with Effect
+                const msgDiv = appendMsg('ai', ''); // Create empty bubble
+                const contentDiv = msgDiv.querySelector('.content');
+                
+                // Markdown parse + Decrypt effect is tricky, so we just type raw text or simple parse
+                // For "Matrix" feel, we decrypt short text, but for long text we just fade in.
+                contentDiv.innerHTML = marked.parse(resp);
+                speak(resp.replace(/[*#`]/g, '')); // Speak clean text
 
-            } catch (e) {
-                // 4. Failure
-                document.getElementById(loadingId).remove();
-                appendError(`System Error: ${e.message || "Connection Failed"}`);
+                history.push({"role": rebel ? "user" : "user", "content": txt});
+                history.push({"role": "assistant", "content": resp});
+
+            } catch(e) {
+                document.getElementById(loadId).remove();
+                appendMsg('ai', "SYSTEM CRITICAL FAILURE: " + e);
             }
-
-            isProcessing = false;
-            document.getElementById('sendBtn').disabled = false;
         }
 
-        // --- UI HELPERS ---
-        function appendMessage(role, text, save) {
+        function appendMsg(role, text) {
             const feed = document.getElementById('chatFeed');
             const div = document.createElement('div');
-            const isUser = role === 'user';
+            div.className = `flex ${role==='user'?'justify-end':'justify-start'}`;
             
-            div.className = `flex ${isUser ? 'justify-end' : 'justify-start'} animate-fade-in-up`;
             div.innerHTML = `
-                <div class="max-w-[85%] md:max-w-[70%] rounded-2xl p-4 text-[15px] leading-relaxed shadow-sm ${isUser ? 'msg-user rounded-br-none' : 'msg-ai rounded-bl-none'}">
-                    ${isUser ? text : marked.parse(text)}
+                <div class="max-w-[85%] p-4 text-sm ${role==='user'?'msg-user':'msg-ai'} shadow-lg">
+                    <div class="content">${role==='user' ? text : ''}</div>
                 </div>
             `;
-            
             feed.appendChild(div);
-            scrollToBottom();
-
-            if (save) {
-                chatHistory.push({ role, content: text });
-                if (!currentFile) localStorage.setItem('vin_history', JSON.stringify(chatHistory));
-            }
+            feed.scrollTop = feed.scrollHeight;
+            return div;
         }
 
         function appendLoading(id) {
             const feed = document.getElementById('chatFeed');
             const div = document.createElement('div');
             div.id = id;
-            div.className = 'flex justify-start';
-            div.innerHTML = `
-                <div class="msg-ai rounded-2xl rounded-bl-none p-4 flex gap-1 items-center h-12">
-                    <div class="w-2 h-2 bg-gray-500 rounded-full typing-dot"></div>
-                    <div class="w-2 h-2 bg-gray-500 rounded-full typing-dot" style="animation-delay: 0.2s"></div>
-                    <div class="w-2 h-2 bg-gray-500 rounded-full typing-dot" style="animation-delay: 0.4s"></div>
-                </div>
-            `;
+            div.className = 'text-[10px] text-cyan-500 ml-4 animate-pulse mono';
+            div.innerText = 'PROCESSING NEURAL PATHWAYS...';
             feed.appendChild(div);
-            scrollToBottom();
-        }
-
-        function appendError(msg) {
-            const feed = document.getElementById('chatFeed');
-            const div = document.createElement('div');
-            div.className = 'flex justify-center my-4';
-            div.innerHTML = `<div class="msg-error px-4 py-2 rounded-lg text-xs font-mono shadow-lg">${msg}</div>`;
-            feed.appendChild(div);
-            scrollToBottom();
-        }
-
-        function scrollToBottom() {
-            const feed = document.getElementById('chatFeed');
             feed.scrollTop = feed.scrollHeight;
         }
 
-        // Auto-Resize Textarea
-        const tx = document.getElementById("userInput");
-        tx.addEventListener("input", function() {
-            this.style.height = "auto";
-            this.style.height = (this.scrollHeight) + "px";
-        });
-        tx.addEventListener("keydown", function(e) {
-            if(e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                sendMessage();
-            }
+        // Enter Key Send
+        document.getElementById('userInput').addEventListener('keydown', (e) => {
+            if(e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); }
         });
     </script>
 </body>
