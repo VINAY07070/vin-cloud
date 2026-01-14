@@ -1,272 +1,240 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>VIN ETERNITY | ENGINE</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VinGPT Ultimate</title>
+    
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/9.1.2/marked.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+
     <style>
-        /* CORE AESTHETICS */
-        body { font-family: 'Rajdhani', sans-serif; background: #000; color: #fff; overflow: hidden; cursor: crosshair; }
-        .mono { font-family: 'Share Tech Mono', monospace; }
+        /* Base Aesthetic */
+        body { background-color: #f3f4f6; color: #111827; font-family: 'Inter', sans-serif; }
         
-        /* PARALLAX BG */
-        #starfield { position: absolute; top: -50%; left: -50%; width: 200%; height: 200%; background-image: radial-gradient(white 1px, transparent 1px); background-size: 50px 50px; opacity: 0.1; z-index: 0; transition: transform 0.1s ease-out; }
-
-        /* MESSAGE STYLES */
-        .msg-user { background: rgba(0, 255, 255, 0.1); border: 1px solid #00ffff; color: #00ffff; border-radius: 12px 0 12px 12px; box-shadow: 0 0 10px rgba(0,255,255,0.1); }
-        .msg-ai { background: rgba(0, 0, 0, 0.8); border-left: 3px solid #fff; padding-left: 15px; color: #ccc; font-family: 'Share Tech Mono', monospace; font-size: 14px; }
+        /* Chat Bubbles */
+        .msg-user { background: #000; color: white; border-radius: 18px 18px 4px 18px; }
+        .msg-ai { background: #fff; color: #374151; border-radius: 18px 18px 18px 4px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
         
-        /* REBEL MODE */
-        .rebel .msg-ai { border-left-color: #ff0000; color: #ff9999; }
-        .rebel-glow { box-shadow: 0 0 20px rgba(255, 0, 0, 0.3) !important; border-color: #ff0000 !important; }
+        /* Image Output */
+        .ai-image { border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); transition: transform 0.3s; cursor: pointer; }
+        .ai-image:hover { transform: scale(1.02); }
 
-        /* DECRYPT EFFECT CURSOR */
-        .cursor { display: inline-block; width: 8px; height: 16px; background: #0ff; animation: blink 1s infinite; }
+        /* Code Blocks */
+        pre { background: #1e1e1e !important; padding: 15px; border-radius: 10px; overflow-x: auto; font-size: 0.9em; }
+        
+        /* Loading Animation */
+        .typing-dot { width: 6px; height: 6px; background: #9ca3af; border-radius: 50%; animation: bounce 1.4s infinite ease-in-out both; }
+        @keyframes bounce { 0%, 80%, 100% { transform: scale(0); } 40% { transform: scale(1); } }
     </style>
 </head>
-<body class="h-screen flex flex-col relative">
+<body class="h-screen flex flex-col md:flex-row overflow-hidden">
 
-    <div id="starfield"></div>
-
-    <div class="h-16 border-b border-white/10 flex justify-between items-center px-6 bg-black/80 backdrop-blur-md z-50 relative">
-        <div class="flex flex-col">
-            <h1 class="text-2xl font-bold tracking-[4px]">VIN<span class="text-cyan-400">ETERNITY</span></h1>
-            <span class="text-[9px] text-gray-500 mono tracking-widest">OP: {{ user }} // ID: {{ mission_id }}</span>
+    <div id="sidebar" class="w-72 bg-white border-r border-gray-200 hidden md:flex flex-col z-20">
+        <div class="p-6">
+            <h1 class="text-2xl font-bold tracking-tight">VinGPT <span class="text-indigo-600 text-xs align-top">ULTIMATE</span></h1>
         </div>
         
-        <div class="flex items-center gap-4">
-            <button id="voiceBtn" onclick="toggleVoice()" class="text-[10px] border border-gray-600 px-3 py-1 rounded text-gray-400 hover:text-white transition">
-                VOICE: OFF
-            </button>
-            
-            <button id="rebelBtn" onclick="toggleRebel()" class="text-[10px] border border-cyan-600 px-3 py-1 rounded text-cyan-400 hover:bg-cyan-900/30 transition">
-                MODE: CORE
-            </button>
-
-            <a href="/logout" class="text-xs text-red-500 hover:text-red-300">LOGOUT</a>
-        </div>
-    </div>
-
-    <div id="chatFeed" class="flex-1 overflow-y-auto p-4 md:p-8 space-y-6 pb-32 z-10 scroll-smooth relative">
-        <div id="intro" class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none opacity-50">
-            <div class="w-20 h-20 border border-cyan-500 rounded-full flex items-center justify-center animate-pulse mb-4">
-                <div class="w-16 h-16 bg-cyan-500/20 rounded-full"></div>
+        <div class="flex-1 px-4 space-y-6 overflow-y-auto">
+            <div>
+                <label class="text-xs font-bold text-gray-400 uppercase">Intelligence Model</label>
+                <select id="modelSelect" class="w-full mt-2 p-3 bg-gray-50 border border-gray-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-indigo-500">
+                    <option value="llama-3.3-70b-versatile">Llama 3.3 (Genius)</option>
+                    <option value="mixtral-8x7b-32768">Mixtral (Creative)</option>
+                    <option value="gemma2-9b-it">Gemma 2 (Fast)</option>
+                </select>
             </div>
-            <h2 class="text-xl mono text-cyan-500">SYSTEM INITIALIZED</h2>
-            <p class="text-xs text-gray-500 mt-2">WAITING FOR OPERATOR INPUT...</p>
+
+            <div class="bg-indigo-50 p-4 rounded-xl space-y-2">
+                <div class="text-xs font-bold text-indigo-800 uppercase">Capabilities Active</div>
+                <div class="flex items-center gap-2 text-sm text-indigo-700">
+                    <span>🌐</span> Live Web Search
+                </div>
+                <div class="flex items-center gap-2 text-sm text-indigo-700">
+                    <span>🎨</span> Image Generation
+                </div>
+                <div class="flex items-center gap-2 text-sm text-indigo-700">
+                    <span>🗣️</span> Neural Voice
+                </div>
+            </div>
+        </div>
+
+        <div class="p-4 border-t border-gray-200">
+            <button onclick="clearChat()" class="text-sm text-red-500 hover:text-red-700 font-medium w-full text-left p-2 hover:bg-red-50 rounded-lg transition">🗑️ Clear Memory</button>
+            <a href="/logout" class="block text-sm text-gray-500 hover:text-black font-medium w-full text-left p-2 hover:bg-gray-100 rounded-lg transition mt-1">🚪 Log Out</a>
         </div>
     </div>
 
-    <div class="bg-black/90 border-t border-white/10 p-4 w-full absolute bottom-0 z-50">
-        <div class="max-w-4xl mx-auto flex flex-col gap-2">
-            
-            <select id="modelSelect" class="bg-black border border-white/10 text-[10px] text-gray-500 p-1 w-max outline-none focus:border-cyan-500">
-                <option value="llama-3.3-70b-versatile">VIN TITAN (LOGIC CORE)</option>
-                <option value="chatgpt-os">CHATGPT OS (PREMIUM)</option>
-                <option value="vision">VIN OCULUS (VISUAL)</option>
-                <option value="audio">VIN VOX (AUDITORY)</option>
-            </select>
+    <div class="flex-1 flex flex-col relative bg-[#f9fafb]">
+        <div class="md:hidden h-14 bg-white border-b border-gray-200 flex items-center justify-between px-4 z-10">
+            <span class="font-bold">VinGPT</span>
+            <button onclick="toggleSidebar()" class="text-gray-600">☰</button>
+        </div>
 
-            <div id="inputBox" class="flex items-end gap-0 border border-white/20 bg-black transition-all">
-                <button onclick="document.getElementById('fileInput').click()" class="p-3 text-gray-500 hover:text-white">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+        <div id="chatContainer" class="flex-1 overflow-y-auto p-4 md:p-8 space-y-6 pb-32">
+            <div id="emptyState" class="h-full flex flex-col items-center justify-center opacity-40">
+                <div class="w-20 h-20 bg-gray-200 rounded-full flex items-center justify-center text-4xl mb-4">✨</div>
+                <h2 class="text-xl font-bold text-gray-800">Ready to create.</h2>
+                <p class="text-sm text-gray-500 mt-2">Try "Draw a futuristic city" or "Price of Bitcoin"</p>
+            </div>
+        </div>
+
+        <div class="absolute bottom-0 w-full bg-gradient-to-t from-[#f9fafb] via-[#f9fafb] to-transparent pt-10 pb-6 px-4">
+            <div class="max-w-3xl mx-auto bg-white shadow-xl border border-gray-200 rounded-2xl flex items-end p-2 transition-shadow focus-within:ring-2 focus-within:ring-indigo-100">
+                <textarea id="userInput" rows="1" class="w-full bg-transparent border-none outline-none p-3 text-gray-800 placeholder-gray-400 resize-none max-h-40" placeholder="Message VinGPT..."></textarea>
+                <button onclick="send()" id="sendBtn" class="p-3 bg-black text-white rounded-xl hover:bg-gray-800 transition shadow-lg mb-0.5 mr-0.5">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14M12 5l7 7-7 7"></path></svg>
                 </button>
-                <input type="file" id="fileInput" class="hidden" onchange="handleFile(this)">
-                
-                <textarea id="userInput" rows="1" class="w-full bg-transparent text-white text-base p-3 focus:outline-none resize-none mono" placeholder="Enter Command Sequence..."></textarea>
-                
-                <button onclick="send()" class="p-3 text-cyan-500 font-bold hover:bg-cyan-900/20 tracking-widest text-xs">SEND</button>
             </div>
+            <p class="text-center text-xs text-gray-400 mt-3">Powered by Vinay Intelligence • v5.0 Ultimate</p>
         </div>
     </div>
 
     <script>
-        // --- CONFIG ---
-        let rebel = false;
-        let voice = false;
         let history = [];
-        let currentFile = null;
-        const synth = window.speechSynthesis;
-
-        // --- MOUSE PARALLAX EFFECT ---
-        document.addEventListener('mousemove', (e) => {
-            const x = (window.innerWidth - e.pageX) / 50;
-            const y = (window.innerHeight - e.pageY) / 50;
-            document.getElementById('starfield').style.transform = `translate(${x}px, ${y}px)`;
-        });
-
-        // --- SOUND EFFECTS (Click) ---
-        function playClick() {
-            // Simple oscillator beep for "tech" feel
-            const ctx = new (window.AudioContext || window.webkitAudioContext)();
-            const osc = ctx.createOscillator();
-            const gain = ctx.createGain();
-            osc.type = 'sine';
-            osc.frequency.value = 800;
-            gain.gain.exponentialRampToValueAtTime(0.00001, ctx.currentTime + 0.04);
-            osc.connect(gain);
-            gain.connect(ctx.destination);
-            osc.start();
-            osc.stop(0.04);
-        }
-
-        // --- TOGGLES ---
-        function toggleRebel() {
-            playClick();
-            rebel = !rebel;
-            const btn = document.getElementById('rebelBtn');
-            const box = document.getElementById('inputBox');
-            document.body.classList.toggle('rebel', rebel);
-            
-            if(rebel) {
-                btn.innerText = "MODE: REBEL";
-                btn.classList.add('text-red-500', 'border-red-500');
-                box.classList.add('rebel-glow');
-            } else {
-                btn.innerText = "MODE: CORE";
-                btn.classList.remove('text-red-500', 'border-red-500');
-                box.classList.remove('rebel-glow');
-            }
-        }
-
-        function toggleVoice() {
-            playClick();
-            voice = !voice;
-            const btn = document.getElementById('voiceBtn');
-            btn.innerText = voice ? "VOICE: ON" : "VOICE: OFF";
-            btn.className = voice ? "text-[10px] border border-green-500 px-3 py-1 rounded text-green-400" : "text-[10px] border border-gray-600 px-3 py-1 rounded text-gray-400";
-        }
-
+        const chatBox = document.getElementById('chatContainer');
+        
+        // --- VOICE 2.0 (HUMAN TUNING) ---
         function speak(text) {
-            if(!voice) return;
-            synth.cancel();
+            window.speechSynthesis.cancel();
             const utter = new SpeechSynthesisUtterance(text);
-            utter.pitch = rebel ? 0.8 : 1; // Lower pitch for Rebel
-            utter.rate = 1.1;
-            synth.speak(utter);
+            const voices = window.speechSynthesis.getVoices();
+            
+            // Priority list for premium voices
+            const preferred = voices.find(v => 
+                v.name.includes("Google US English") || 
+                v.name.includes("Microsoft Zira") || 
+                v.name.includes("Samantha")
+            );
+            
+            if (preferred) utter.voice = preferred;
+            utter.rate = 1.05; // Slightly faster for natural flow
+            utter.pitch = 1.0;
+            window.speechSynthesis.speak(utter);
         }
 
-        // --- DECRYPTION TEXT EFFECT ---
-        function decryptText(element, text) {
-            let iterations = 0;
-            const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890@#$%^&*";
-            const interval = setInterval(() => {
-                element.innerText = text.split("").map((letter, index) => {
-                    if(index < iterations) return letter;
-                    return letters[Math.floor(Math.random() * 26)];
-                }).join("");
-                
-                if(iterations >= text.length) clearInterval(interval);
-                iterations += 1 / 2; // Speed
-            }, 30);
-        }
-
-        // --- CORE CHAT ---
-        function handleFile(input) {
-            if(input.files[0]) {
-                playClick();
-                currentFile = input.files[0];
-                const box = document.getElementById('userInput');
-                box.value = `[FILE ATTACHED: ${currentFile.name}]`;
-                const sel = document.getElementById('modelSelect');
-                if(currentFile.type.includes('image')) sel.value = 'vision';
-                if(currentFile.type.includes('audio')) sel.value = 'audio';
-            }
-        }
-
+        // --- CORE LOGIC ---
         async function send() {
-            playClick();
             const input = document.getElementById('userInput');
-            let txt = input.value.trim();
-            const model = document.getElementById('modelSelect').value;
+            const text = input.value.trim();
+            if (!text) return;
 
-            if(!txt && !currentFile) return;
-            if(txt.startsWith("[FILE ATTACHED")) txt = ""; // Clear file placeholder text
-
-            document.getElementById('intro').style.display = 'none';
+            document.getElementById('emptyState').style.display = 'none';
             input.value = '';
+            input.style.height = 'auto';
 
-            // User Msg
-            appendMsg('user', txt || `[TRANSMITTING FILE: ${currentFile.name}]`);
+            // User UI
+            addMsg('user', text);
+            history.push({ role: "user", content: text });
 
-            // Loading
-            const loadId = 'load-'+Date.now();
-            appendLoading(loadId);
+            // Loading UI
+            const loadId = addLoading();
 
             try {
-                let resp;
-                if(currentFile) {
-                    const fd = new FormData();
-                    fd.append('file', currentFile);
-                    if(txt) fd.append('prompt', txt);
-                    const ep = model === 'audio' ? '/api/audio' : '/api/vision';
-                    const r = await fetch(ep, {method:'POST', body:fd});
-                    const d = await r.json();
-                    resp = d.response;
-                    currentFile = null;
-                } else {
-                    const r = await fetch('/api/chat', {
-                        method:'POST',
-                        headers:{'Content-Type':'application/json'},
-                        body:JSON.stringify({
-                            message:txt, history:history, model:model, rebel: rebel
-                        })
-                    });
-                    const d = await r.json();
-                    resp = d.response;
+                const res = await fetch('/api/generate', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        message: text,
+                        history: history,
+                        model: document.getElementById('modelSelect').value
+                    })
+                });
+                
+                const data = await res.json();
+                document.getElementById(loadId).remove();
+
+                if (data.type === 'error') {
+                    addMsg('system', "Error: " + data.content);
+                } 
+                else if (data.type === 'image') {
+                    addImage(data.content, data.alt);
+                    history.push({ role: "assistant", content: `[Generated Image: ${data.alt}]` });
+                } 
+                else {
+                    addMsg('ai', data.content);
+                    history.push({ role: "assistant", content: data.content });
                 }
 
+            } catch (e) {
                 document.getElementById(loadId).remove();
-                
-                // Add AI Msg with Effect
-                const msgDiv = appendMsg('ai', ''); // Create empty bubble
-                const contentDiv = msgDiv.querySelector('.content');
-                
-                // Markdown parse + Decrypt effect is tricky, so we just type raw text or simple parse
-                // For "Matrix" feel, we decrypt short text, but for long text we just fade in.
-                contentDiv.innerHTML = marked.parse(resp);
-                speak(resp.replace(/[*#`]/g, '')); // Speak clean text
-
-                history.push({"role": rebel ? "user" : "user", "content": txt});
-                history.push({"role": "assistant", "content": resp});
-
-            } catch(e) {
-                document.getElementById(loadId).remove();
-                appendMsg('ai', "SYSTEM CRITICAL FAILURE: " + e);
+                addMsg('system', "Network Error. Please try again.");
             }
         }
 
-        function appendMsg(role, text) {
-            const feed = document.getElementById('chatFeed');
+        // --- UI BUILDERS ---
+        function addMsg(role, content) {
             const div = document.createElement('div');
-            div.className = `flex ${role==='user'?'justify-end':'justify-start'}`;
+            const isUser = role === 'user';
             
+            div.className = `flex ${isUser ? 'justify-end' : 'justify-start'} animate-fade`;
             div.innerHTML = `
-                <div class="max-w-[85%] p-4 text-sm ${role==='user'?'msg-user':'msg-ai'} shadow-lg">
-                    <div class="content">${role==='user' ? text : ''}</div>
+                <div class="max-w-[85%] md:max-w-[75%] p-4 text-sm leading-relaxed ${isUser ? 'msg-user' : 'msg-ai'}">
+                    ${isUser ? content : marked.parse(content)}
+                    ${!isUser ? `<button onclick="speak(this.parentElement.innerText)" class="mt-2 text-xs text-gray-400 hover:text-indigo-600 block transition">🔊 Read</button>` : ''}
                 </div>
             `;
-            feed.appendChild(div);
-            feed.scrollTop = feed.scrollHeight;
-            return div;
+            chatBox.appendChild(div);
+            hljs.highlightAll();
+            chatBox.scrollTop = chatBox.scrollHeight;
         }
 
-        function appendLoading(id) {
-            const feed = document.getElementById('chatFeed');
+        function addImage(url, alt) {
+            const div = document.createElement('div');
+            div.className = "flex justify-start animate-fade";
+            div.innerHTML = `
+                <div class="bg-white p-2 rounded-2xl shadow-sm border border-gray-100 max-w-md">
+                    <img src="${url}" alt="${alt}" class="ai-image w-full h-auto" onload="this.scrollIntoView({behavior:'smooth'})">
+                    <div class="p-2 text-xs text-gray-500 flex justify-between">
+                        <span>🎨 AI Generated</span>
+                        <a href="${url}" target="_blank" class="text-indigo-600 hover:underline">Download</a>
+                    </div>
+                </div>
+            `;
+            chatBox.appendChild(div);
+        }
+
+        function addLoading() {
+            const id = 'load-' + Date.now();
             const div = document.createElement('div');
             div.id = id;
-            div.className = 'text-[10px] text-cyan-500 ml-4 animate-pulse mono';
-            div.innerText = 'PROCESSING NEURAL PATHWAYS...';
-            feed.appendChild(div);
-            feed.scrollTop = feed.scrollHeight;
+            div.className = "flex justify-start";
+            div.innerHTML = `
+                <div class="msg-ai p-4 flex gap-1 items-center h-10">
+                    <div class="typing-dot" style="animation-delay: 0s"></div>
+                    <div class="typing-dot" style="animation-delay: 0.2s"></div>
+                    <div class="typing-dot" style="animation-delay: 0.4s"></div>
+                </div>
+            `;
+            chatBox.appendChild(div);
+            return id;
         }
 
-        // Enter Key Send
-        document.getElementById('userInput').addEventListener('keydown', (e) => {
+        function clearChat() {
+            history = [];
+            chatBox.innerHTML = '';
+            document.getElementById('emptyState').style.display = 'flex';
+        }
+
+        function toggleSidebar() {
+            const sb = document.getElementById('sidebar');
+            sb.classList.toggle('hidden');
+            sb.classList.toggle('absolute');
+            sb.classList.toggle('h-full');
+            sb.classList.toggle('shadow-2xl');
+        }
+
+        // Utils
+        const txt = document.getElementById('userInput');
+        txt.addEventListener('keydown', e => {
             if(e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); }
+        });
+        txt.addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = (this.scrollHeight) + 'px';
         });
     </script>
 </body>
