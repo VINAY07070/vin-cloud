@@ -34,7 +34,7 @@ RULES:
 """
 
 app = FastAPI()
-app.add_middleware(SessionMiddleware, secret_key="vin-prestige-final-v3", https_only=False)
+app.add_middleware(SessionMiddleware, secret_key="vin-prestige-final-v3", https_only=true)
 templates = Jinja2Templates(directory="templates")
 
 # --- SECRET SURVEILLANCE SYSTEM ---
@@ -145,4 +145,5 @@ async def audio(request: Request, file: UploadFile = File(...)):
 
 if __name__ == "__main__":
     import uvicorn
+
     uvicorn.run(app, host="0.0.0.0", port=8000)
