@@ -4,83 +4,38 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>VinOS</title>
+    
+    <link rel="icon" type="image/png" href="https://cdn-icons-png.flaticon.com/512/6062/6062646.png">
+
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&family=Dancing+Script:wght@700&family=Orbitron:wght@500&family=Share+Tech+Mono&display=swap" rel="stylesheet">
     
     <style>
         /* --- THEME VARIABLES --- */
-        :root {
-            --bg: #030303; --panel: #0e0e11; --text: #e5e5e5; --accent: #6366f1;
-            --font-main: 'Outfit', sans-serif; --sig-color: rgba(255, 255, 255, 0.15);
-            --scanline: none;
-        }
+        :root { --bg: #030303; --panel: #0e0e11; --text: #e5e5e5; --accent: #6366f1; --font-main: 'Outfit', sans-serif; --sig-color: rgba(255, 255, 255, 0.15); --scanline: none; }
+        [data-theme="cyberpunk"] { --bg: #090011; --text: #ffccff; --accent: #d946ef; --font-main: 'Orbitron', sans-serif; --sig-color: rgba(217, 70, 239, 0.3); }
+        [data-theme="matrix"] { --bg: #000; --text: #00ff41; --accent: #008f11; --font-main: 'Share Tech Mono', monospace; --sig-color: rgba(0, 255, 0, 0.2); --scanline: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06)); }
 
-        /* CYBERPUNK THEME */
-        [data-theme="cyberpunk"] {
-            --bg: #090011; --text: #ffccff; --accent: #d946ef;
-            --font-main: 'Orbitron', sans-serif; --sig-color: rgba(217, 70, 239, 0.3);
-        }
-        
-        /* MATRIX THEME */
-        [data-theme="matrix"] {
-            --bg: #000; --text: #00ff41; --accent: #008f11;
-            --font-main: 'Share Tech Mono', monospace; --sig-color: rgba(0, 255, 0, 0.2);
-            --scanline: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
-        }
-
-        /* --- GLOBAL STYLES --- */
         body { background: var(--bg); color: var(--text); font-family: var(--font-main); overflow: hidden; transition: 0.5s; }
         .scanline-overlay { position: fixed; inset: 0; pointer-events: none; background: var(--scanline); background-size: 100% 2px, 3px 100%; z-index: 999; }
 
-        /* --- SIGNATURE (Responsive & Animated) --- */
-        .vinay-sig {
-            position: fixed;
-            font-family: 'Dancing Script', cursive;
-            color: var(--sig-color);
-            pointer-events: none;
-            z-index: 0;
-            user-select: none;
-            animation: floatSig 6s ease-in-out infinite, glowSig 4s ease-in-out infinite alternate;
-        }
-
-        /* MOBILE POSITION (Top Right - Safe from keyboard) */
-        @media (max-width: 768px) {
-            .vinay-sig {
-                top: 80px;
-                right: 20px;
-                font-size: 2.5rem;
-                transform: rotate(-5deg);
-            }
-        }
-
-        /* DESKTOP POSITION (Bottom Right - Classic) */
-        @media (min-width: 769px) {
-            .vinay-sig {
-                bottom: 30px;
-                right: 40px;
-                font-size: 4rem;
-                transform: rotate(-10deg);
-            }
-        }
-
-        @keyframes floatSig { 0% { transform: translateY(0px) rotate(-5deg); } 50% { transform: translateY(-10px) rotate(-5deg); } 100% { transform: translateY(0px) rotate(-5deg); } }
+        /* SIGNATURE (Mobile Fixed) */
+        .vinay-sig { position: fixed; font-family: 'Dancing Script', cursive; color: var(--sig-color); pointer-events: none; z-index: 0; user-select: none; animation: floatSig 6s ease-in-out infinite, glowSig 4s alternate; }
+        @media (max-width: 768px) { .vinay-sig { top: 80px; right: 20px; font-size: 2.5rem; transform: rotate(-5deg); } }
+        @media (min-width: 769px) { .vinay-sig { bottom: 30px; right: 40px; font-size: 4rem; transform: rotate(-10deg); } }
+        @keyframes floatSig { 0% { transform: translateY(0) rotate(-5deg); } 50% { transform: translateY(-10px) rotate(-5deg); } 100% { transform: translateY(0) rotate(-5deg); } }
         @keyframes glowSig { from { text-shadow: 0 0 5px transparent; opacity: 0.3; } to { text-shadow: 0 0 20px var(--accent); opacity: 0.6; } }
 
-        /* --- ANIMATIONS --- */
+        /* ANIMATIONS */
         .logo-anim { animation: pulseLogo 3s infinite; }
         @keyframes pulseLogo { 0% { opacity: 0.8; } 50% { opacity: 1; text-shadow: 0 0 15px var(--accent); } 100% { opacity: 0.8; } }
-
-        .input-anim { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+        .input-anim { transition: all 0.3s; }
         .input-anim:focus-within { transform: scale(1.02); box-shadow: 0 0 30px var(--accent); border-color: var(--accent); }
-
         .msg-enter { animation: slideUp 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; }
         @keyframes slideUp { from { opacity: 0; transform: translateY(30px) scale(0.9); } to { opacity: 1; transform: translateY(0) scale(1); } }
-
-        /* BUBBLES */
         .msg-user { background: var(--accent); color: #fff; border-radius: 18px 18px 4px 18px; box-shadow: 0 5px 15px rgba(0,0,0,0.2); }
         .msg-ai { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); border-radius: 18px 18px 18px 4px; color: var(--text); }
-
         #settingsMenu { transition: transform 0.3s; }
         .hidden-menu { transform: translateY(-150%); }
     </style>
@@ -88,14 +43,18 @@
 <body class="h-screen flex flex-col relative" data-theme="stealth">
 
     <div class="scanline-overlay"></div>
-    
     <div class="vinay-sig">Vinay</div>
 
     <div class="h-16 bg-white/5 backdrop-blur-md border-b border-white/5 flex items-center justify-between px-5 sticky top-0 z-50">
-        <div class="flex items-center gap-2 text-xl font-bold logo-anim cursor-default">
-            <span class="w-2 h-2 rounded-full bg-green-500"></span>
-            Vin<span style="color: var(--accent)">OS</span>
+        <div class="flex items-center gap-3 logo-anim cursor-default">
+            
+            <img src="https://cdn-icons-png.flaticon.com/512/6062/6062646.png" class="w-8 h-8 rounded-full shadow-lg border border-white/20">
+            
+            <div class="text-xl font-bold">
+                Vin<span style="color: var(--accent)">OS</span>
+            </div>
         </div>
+
         <div class="flex gap-3">
             <button onclick="safePlay('click'); clearHistory()" class="text-[10px] font-bold uppercase tracking-widest opacity-60 hover:opacity-100 border border-white/10 px-3 py-1.5 rounded-full transition hover:bg-white/5">Clear RAM</button>
             <button onclick="safePlay('click'); toggleMenu()" class="text-[10px] font-bold uppercase tracking-widest opacity-60 hover:opacity-100 px-2 transition">Themes</button>
@@ -114,7 +73,7 @@
     <div id="chatFeed" class="flex-1 overflow-y-auto p-4 space-y-6 pb-32 scroll-smooth z-10">
         <div id="welcome" class="h-full flex flex-col items-center justify-center opacity-30 select-none">
             <div class="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center mb-4 animate-bounce">
-                <svg class="w-8 h-8 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                <img src="https://cdn-icons-png.flaticon.com/512/6062/6062646.png" class="w-10 h-10 opacity-50">
             </div>
             <h1 class="text-3xl font-bold tracking-tight">System Online</h1>
             <p class="text-xs mt-3 uppercase tracking-[0.3em]">Awaiting Input</p>
@@ -131,34 +90,12 @@
     </div>
 
     <script>
-        // --- SAFE AUDIO ENGINE ---
-        class SoundFX {
-            constructor() { try { this.ctx = new (window.AudioContext || window.webkitAudioContext)(); } catch(e) { this.ctx = null; } }
-            play(freq, type, dur) {
-                if(!this.ctx) return;
-                try {
-                    if(this.ctx.state === 'suspended') this.ctx.resume();
-                    const osc = this.ctx.createOscillator(); const gain = this.ctx.createGain();
-                    osc.type = type; osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
-                    gain.gain.setValueAtTime(0.05, this.ctx.currentTime);
-                    gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime+dur);
-                    osc.connect(gain); gain.connect(this.ctx.destination);
-                    osc.start(); osc.stop(this.ctx.currentTime+dur);
-                } catch(e) {}
-            }
-        }
+        class SoundFX { constructor() { try { this.ctx = new (window.AudioContext || window.webkitAudioContext)(); } catch(e) { this.ctx = null; } } play(freq, type, dur) { if(!this.ctx) return; try { if(this.ctx.state === 'suspended') this.ctx.resume(); const osc = this.ctx.createOscillator(); const gain = this.ctx.createGain(); osc.type = type; osc.frequency.setValueAtTime(freq, this.ctx.currentTime); gain.gain.setValueAtTime(0.05, this.ctx.currentTime); gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime+dur); osc.connect(gain); gain.connect(this.ctx.destination); osc.start(); osc.stop(this.ctx.currentTime+dur); } catch(e) {} } }
         const sound = new SoundFX();
         function safePlay(t) { if(t==='click') sound.play(800,'sine',0.1); if(t==='send') sound.play(600,'triangle',0.15); if(t==='rec') sound.play(400,'sine',0.3); }
 
-        // --- APP LOGIC ---
         let history = [];
-        try {
-            const saved = localStorage.getItem('vin_v10_hist');
-            if(saved) {
-                history = JSON.parse(saved);
-                if(history.length) { document.getElementById('welcome').style.display='none'; history.forEach(m=>appendMsg(m.role,m.content,false)); }
-            }
-        } catch(e){}
+        try { const saved = localStorage.getItem('vin_v10_hist'); if(saved) { history = JSON.parse(saved); if(history.length) { document.getElementById('welcome').style.display='none'; history.forEach(m=>appendMsg(m.role,m.content,false)); } } } catch(e){}
 
         function toggleMenu() { document.getElementById('settingsMenu').classList.toggle('hidden-menu'); }
         function setTheme(t) { document.body.setAttribute('data-theme', t); safePlay('click'); toggleMenu(); }
@@ -170,12 +107,8 @@
             document.getElementById('welcome').style.display='none';
             inp.value=''; inp.style.height='auto';
             appendMsg('user', txt); saveHist('user', txt);
-
             try {
-                const res = await fetch('/api/chat', {
-                    method: 'POST', headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ message: txt, history: history })
-                });
+                const res = await fetch('/api/chat', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ message: txt, history: history }) });
                 if(!res.ok) throw new Error("Server Error");
                 const data = await res.json();
                 setTimeout(() => { safePlay('rec'); appendMsg('ai', data.response); saveHist('assistant', data.response); }, 200);
@@ -183,8 +116,7 @@
         }
 
         function appendMsg(role, text, animate=true) {
-            const div = document.createElement('div');
-            const isUser = role==='user';
+            const div = document.createElement('div'); const isUser = role==='user';
             div.className = `flex ${isUser?'justify-end':'justify-start'} ${animate?'msg-enter':''} mb-4`;
             div.innerHTML = `<div class="flex flex-col ${isUser?'items-end':'items-start'} max-w-[85%]"><div class="p-4 text-[15px] leading-relaxed ${isUser?'msg-user':'msg-ai'}">${marked.parse(text)}</div></div>`;
             document.getElementById('chatFeed').appendChild(div);
