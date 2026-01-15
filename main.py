@@ -1,5 +1,5 @@
 from fastapi import FastAPI, Request, Form, HTTPException
-from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse, PlainTextResponse
+from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 from starlette.middleware.sessions import SessionMiddleware
@@ -9,17 +9,13 @@ import datetime
 import random
 
 # --- CONFIG ---
-# Multi-Key Support (Add your keys here if you have more)
-API_KEYS = [
-    os.getenv("GROQ_API_KEY"),
-]
+API_KEYS = [os.getenv("GROQ_API_KEY")]
 
 def get_client():
     valid_keys = [k for k in API_KEYS if k and k.startswith("gsk_")]
     if not valid_keys: return None
     return AsyncGroq(api_key=random.choice(valid_keys))
 
-# USERS
 USERS = {
     "Vinay": "Boss123",
     "Xenon": "Gas99",
@@ -38,27 +34,24 @@ You are VIN PRESTIGE.
 """
 
 app = FastAPI()
-app.add_middleware(SessionMiddleware, secret_key="vin-platinum-key", https_only=True)
+app.add_middleware(SessionMiddleware, secret_key="vin-godmode-key", https_only=True)
 templates = Jinja2Templates(directory="templates")
 
-# --- SECRET LOGGING ---
+# --- LOGGING ---
 def log_secretly(user, prompt, response):
     timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    entry = f"[{timestamp}] {user}: {prompt}\nAI: {response}\n{'-'*40}\n"
+    # Using a specific delimiter "|||" to make parsing easier later
+    entry = f"{timestamp}|||{user}|||{prompt}|||{response}\n"
     with open("secret_logs.txt", "a", encoding="utf-8") as f:
         f.write(entry)
 
 # --- ROUTES ---
 
-# 1. THE KEEP-ALIVE HACK (The Robot visits this)
 @app.get("/ping")
-async def ping():
-    return {"status": "alive", "message": "VinOS is running"}
+async def ping(): return {"status": "alive"}
 
-# 2. THE LOGIN PAGE (Humans visit this)
 @app.get("/", response_class=HTMLResponse)
 async def login_page(request: Request):
-    # If already logged in, go to OS
     if request.session.get("user"): return RedirectResponse("/os", status_code=303)
     return templates.TemplateResponse("login.html", {"request": request})
 
@@ -80,12 +73,31 @@ async def os_interface(request: Request):
     if not user: return RedirectResponse("/")
     return templates.TemplateResponse("index.html", {"request": request, "user": user})
 
-@app.get("/vinay-secret-logs", response_class=PlainTextResponse)
-async def view_logs(request: Request):
-    if request.session.get("user") != "Vinay": return "ACCESS DENIED."
+# --- NEW: VISUAL ADMIN DASHBOARD ---
+@app.get("/vinay-secret-logs", response_class=HTMLResponse)
+async def view_dashboard(request: Request):
+    if request.session.get("user") != "Vinay": return HTMLResponse("<h1>403 FORBIDDEN</h1>")
+    
+    logs = []
     try:
-        with open("secret_logs.txt", "r", encoding="utf-8") as f: return f.read()
-    except: return "Log empty."
+        with open("secret_logs.txt", "r", encoding="utf-8") as f:
+            for line in f:
+                parts = line.strip().split("|||")
+                if len(parts) == 4:
+                    logs.append({"time": parts[0], "user": parts[1], "input": parts[2], "output": parts[3]})
+    except FileNotFoundError: pass
+    
+    # Calculate Stats
+    user_counts = {}
+    for log in logs:
+        user_counts[log['user']] = user_counts.get(log['user'], 0) + 1
+    
+    return templates.TemplateResponse("admin.html", {
+        "request": request, 
+        "logs": reversed(logs), # Show newest first
+        "total": len(logs),
+        "user_stats": user_counts
+    })
 
 @app.post("/api/chat")
 async def chat(request: Request):
