@@ -9,84 +9,45 @@
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&family=Dancing+Script:wght@700&family=Orbitron:wght@500&family=Share+Tech+Mono&display=swap" rel="stylesheet">
     
     <style>
-        /* --- CORE VARIABLES --- */
+        /* --- THEME DEFINITIONS --- */
         :root {
-            --bg: #030303;
-            --panel: #0e0e11;
-            --text: #e5e5e5;
-            --accent: #6366f1;
-            --font-main: 'Outfit', sans-serif;
-            --sig-color: rgba(255, 255, 255, 0.15);
+            --bg: #030303; --panel: #0e0e11; --text: #e5e5e5; --accent: #6366f1;
+            --font-main: 'Outfit', sans-serif; --sig-color: rgba(255, 255, 255, 0.15);
             --scanline: none;
         }
 
-        /* --- THEME: CYBERPUNK (Neon & Glitch) --- */
         [data-theme="cyberpunk"] {
-            --bg: #090011;
-            --text: #ffccff;
-            --accent: #d946ef;
-            --font-main: 'Orbitron', sans-serif;
-            --sig-color: rgba(217, 70, 239, 0.2);
+            --bg: #090011; --text: #ffccff; --accent: #d946ef;
+            --font-main: 'Orbitron', sans-serif; --sig-color: rgba(217, 70, 239, 0.2);
         }
         [data-theme="cyberpunk"] .msg-enter { animation: glitchAnim 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94) both; }
-        @keyframes glitchAnim { 
-            0% { transform: translate(-10px, 10px); opacity: 0; } 
-            40% { transform: translate(10px, -10px); opacity: 1; } 
-            100% { transform: translate(0); opacity: 1; } 
-        }
+        @keyframes glitchAnim { 0% { transform: translate(-5px, 5px); opacity: 0; } 100% { transform: translate(0); opacity: 1; } }
 
-        /* --- THEME: MATRIX (Hacker & CRT) --- */
         [data-theme="matrix"] {
-            --bg: #000;
-            --text: #00ff41;
-            --accent: #008f11;
-            --font-main: 'Share Tech Mono', monospace;
-            --sig-color: rgba(0, 255, 0, 0.1);
+            --bg: #000; --text: #00ff41; --accent: #008f11;
+            --font-main: 'Share Tech Mono', monospace; --sig-color: rgba(0, 255, 0, 0.1);
             --scanline: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
         }
         [data-theme="matrix"] .msg-enter { animation: typeAnim 0.2s steps(10, end); }
         @keyframes typeAnim { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* --- GLOBAL STYLES --- */
-        body { 
-            background: var(--bg); color: var(--text); font-family: var(--font-main); 
-            overflow: hidden; transition: background 0.5s ease, color 0.5s ease; 
-        }
+        /* --- GLOBAL --- */
+        body { background: var(--bg); color: var(--text); font-family: var(--font-main); overflow: hidden; transition: 0.5s; }
+        .scanline-overlay { position: fixed; inset: 0; pointer-events: none; background: var(--scanline); background-size: 100% 2px, 3px 100%; z-index: 999; }
         
-        /* CRT SCANLINE OVERLAY (For Matrix Theme) */
-        .scanline-overlay {
-            position: fixed; top: 0; left: 0; w: 100%; h: 100%; pointer-events: none;
-            background: var(--scanline); background-size: 100% 2px, 3px 100%; z-index: 9999;
-        }
-
-        /* SIGNATURE */
         .vinay-sig {
-            position: fixed; bottom: 20px; right: 20px;
-            font-family: 'Dancing Script', cursive; font-size: 3rem;
-            color: var(--sig-color); pointer-events: none; z-index: 0;
-            user-select: none; transform: rotate(-5deg); transition: color 0.5s;
+            position: fixed; bottom: 20px; right: 20px; font-family: 'Dancing Script', cursive; 
+            font-size: 3rem; color: var(--sig-color); pointer-events: none; z-index: 0; transform: rotate(-5deg);
         }
 
-        /* BUBBLES */
-        .msg-user { 
-            background: var(--accent); color: #fff; 
-            border-radius: 18px 18px 4px 18px; 
-            box-shadow: 0 5px 20px rgba(0,0,0,0.3);
-        }
-        .msg-ai { 
-            background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); 
-            border-radius: 18px 18px 18px 4px; color: var(--text);
-        }
+        .msg-user { background: var(--accent); color: #fff; border-radius: 18px 18px 4px 18px; box-shadow: 0 5px 20px rgba(0,0,0,0.3); }
+        .msg-ai { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); border-radius: 18px 18px 18px 4px; color: var(--text); }
         
-        /* DEFAULT ANIMATION */
-        .msg-enter { animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
-        @keyframes slideUp { from { opacity: 0; transform: translateY(20px) scale(0.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
+        .msg-enter { animation: slideUp 0.4s ease forwards; }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* UI */
-        #settingsMenu { transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+        #settingsMenu { transition: transform 0.3s; }
         .hidden-menu { transform: translateY(-150%); }
-        ::-webkit-scrollbar { width: 4px; }
-        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 4px; }
     </style>
 </head>
 <body class="h-screen flex flex-col relative" data-theme="stealth">
@@ -95,113 +56,137 @@
     <div class="vinay-sig">Vinay</div>
 
     <div class="h-16 bg-white/5 backdrop-blur-md border-b border-white/5 flex items-center justify-between px-5 sticky top-0 z-50">
-        <div class="flex items-center gap-2">
+        <div class="flex items-center gap-2 text-xl font-bold">
             <span class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
-            <span class="text-xl font-bold tracking-tight">Vin<span style="color: var(--accent)">OS</span></span>
+            Vin<span style="color: var(--accent)">OS</span>
         </div>
         <div class="flex gap-3">
-            <button onclick="clearHistory(); sound.click()" class="text-[10px] font-bold uppercase tracking-widest opacity-60 hover:opacity-100 transition border border-white/10 px-3 py-1.5 rounded-full hover:bg-white/5">
-                Clear RAM
-            </button>
-            <button onclick="toggleMenu(); sound.click()" class="text-[10px] font-bold uppercase tracking-widest opacity-60 hover:opacity-100 transition px-2">
-                Themes
-            </button>
-            <a href="/logout" onclick="sound.click()" class="text-[10px] font-bold text-red-500 uppercase tracking-widest hover:text-red-400 transition pt-2">
-                Exit
-            </a>
+            <button onclick="safePlay('click'); clearHistory()" class="text-[10px] font-bold uppercase tracking-widest opacity-60 hover:opacity-100 border border-white/10 px-3 py-1.5 rounded-full">Clear RAM</button>
+            <button onclick="safePlay('click'); toggleMenu()" class="text-[10px] font-bold uppercase tracking-widest opacity-60 hover:opacity-100 px-2">Themes</button>
+            <a href="/logout" onclick="safePlay('click')" class="text-[10px] font-bold text-red-500 uppercase tracking-widest hover:text-red-400 pt-2">Exit</a>
         </div>
     </div>
 
     <div id="settingsMenu" class="absolute top-16 left-0 w-full bg-[#050505] border-b border-white/10 p-5 z-40 hidden-menu shadow-2xl">
         <div class="flex justify-center gap-4">
-            <button onclick="setTheme('stealth'); sound.click()" class="px-5 py-3 rounded-lg border border-gray-700 bg-gray-900 text-gray-300 text-xs font-bold uppercase tracking-widest hover:border-white transition">Stealth</button>
-            <button onclick="setTheme('cyberpunk'); sound.click()" class="px-5 py-3 rounded-lg border border-fuchsia-900 bg-fuchsia-950 text-fuchsia-300 text-xs font-bold uppercase tracking-widest hover:border-fuchsia-500 transition shadow-[0_0_15px_rgba(217,70,239,0.3)]">Cyberpunk</button>
-            <button onclick="setTheme('matrix'); sound.click()" class="px-5 py-3 rounded-lg border border-green-900 bg-green-950 text-green-400 text-xs font-bold uppercase tracking-widest hover:border-green-500 transition font-mono">Matrix</button>
+            <button onclick="setTheme('stealth')" class="px-5 py-3 rounded-lg border border-gray-700 bg-gray-900 text-gray-300 text-xs font-bold uppercase hover:border-white">Stealth</button>
+            <button onclick="setTheme('cyberpunk')" class="px-5 py-3 rounded-lg border border-fuchsia-900 bg-fuchsia-950 text-fuchsia-300 text-xs font-bold uppercase hover:border-fuchsia-500">Cyberpunk</button>
+            <button onclick="setTheme('matrix')" class="px-5 py-3 rounded-lg border border-green-900 bg-green-950 text-green-400 text-xs font-bold uppercase hover:border-green-500 font-mono">Matrix</button>
         </div>
     </div>
 
-    <div id="chatFeed" class="flex-1 overflow-y-auto p-4 md:p-6 space-y-6 pb-32 scroll-smooth z-10">
+    <div id="chatFeed" class="flex-1 overflow-y-auto p-4 space-y-6 pb-32 scroll-smooth z-10">
         <div id="welcome" class="h-full flex flex-col items-center justify-center opacity-30 select-none">
-            <h1 class="text-3xl font-bold tracking-tight">System Online</h1>
+            <h1 class="text-3xl font-bold">System Online</h1>
             <p class="text-xs mt-3 uppercase tracking-[0.3em]">Awaiting Input</p>
         </div>
     </div>
 
     <div class="fixed bottom-0 w-full p-4 pb-8 z-20">
-        <div class="max-w-3xl mx-auto flex items-end gap-2 bg-white/5 backdrop-blur border border-white/10 p-2 rounded-2xl shadow-2xl transition-all hover:border-white/20">
-            <textarea id="inp" rows="1" class="flex-1 bg-transparent placeholder-white/30 text-sm p-4 focus:outline-none resize-none max-h-32 rounded-xl transition-colors" placeholder="Enter command..."></textarea>
-            <button onclick="send(); sound.send()" class="p-4 rounded-xl text-white shadow-lg transition transform active:scale-95" style="background-color: var(--accent)">
+        <div class="max-w-3xl mx-auto flex items-end gap-2 bg-white/5 backdrop-blur border border-white/10 p-2 rounded-2xl shadow-2xl">
+            <textarea id="inp" rows="1" class="flex-1 bg-transparent placeholder-white/30 text-sm p-4 focus:outline-none resize-none max-h-32 rounded-xl" placeholder="Enter command..."></textarea>
+            <button onclick="send()" class="p-4 rounded-xl text-white shadow-lg transition transform active:scale-95" style="background-color: var(--accent)">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14M12 5l7 7-7 7"></path></svg>
             </button>
         </div>
     </div>
 
     <script>
-        // --- SOUND ENGINE ---
+        // --- SAFE AUDIO ENGINE (Does not crash app) ---
         class SoundFX {
-            constructor() { this.ctx = new (window.AudioContext || window.webkitAudioContext)(); }
-            play(freq, type, dur) {
-                if(this.ctx.state==='suspended') this.ctx.resume();
-                const osc = this.ctx.createOscillator(); const gain = this.ctx.createGain();
-                osc.type=type; osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
-                gain.gain.setValueAtTime(0.05, this.ctx.currentTime);
-                gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime+dur);
-                osc.connect(gain); gain.connect(this.ctx.destination);
-                osc.start(); osc.stop(this.ctx.currentTime+dur);
+            constructor() { 
+                try {
+                    this.ctx = new (window.AudioContext || window.webkitAudioContext)(); 
+                } catch(e) { this.ctx = null; }
             }
-            click() { this.play(800, 'sine', 0.1); }
-            send() { this.play(600, 'triangle', 0.15); }
-            receive() { this.play(400, 'sine', 0.3); }
-            type() { this.play(1200, 'square', 0.03); }
+            play(freq, type, dur) {
+                if(!this.ctx) return; // Silent fail if audio not supported
+                try {
+                    if(this.ctx.state === 'suspended') this.ctx.resume();
+                    const osc = this.ctx.createOscillator(); 
+                    const gain = this.ctx.createGain();
+                    osc.type = type; 
+                    osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+                    gain.gain.setValueAtTime(0.05, this.ctx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime+dur);
+                    osc.connect(gain); 
+                    gain.connect(this.ctx.destination);
+                    osc.start(); 
+                    osc.stop(this.ctx.currentTime+dur);
+                } catch(e) { console.log("Audio Blocked"); }
+            }
         }
         const sound = new SoundFX();
+        
+        function safePlay(type) {
+            // Helper to play sounds without error
+            if(type === 'click') sound.play(800, 'sine', 0.1);
+            if(type === 'send') sound.play(600, 'triangle', 0.15);
+            if(type === 'receive') sound.play(400, 'sine', 0.3);
+        }
 
-        // --- THEME ENGINE ---
+        // --- APP LOGIC ---
+        let history = [];
+        
+        // Load History safely
+        try {
+            const saved = localStorage.getItem('vin_v9_hist');
+            if(saved) {
+                history = JSON.parse(saved);
+                if(history.length > 0) {
+                    document.getElementById('welcome').style.display = 'none';
+                    history.forEach(m => appendMsg(m.role, m.content, false));
+                }
+            }
+        } catch(e) { console.log("History Load Error"); }
+
         function toggleMenu() { document.getElementById('settingsMenu').classList.toggle('hidden-menu'); }
         function setTheme(theme) {
             document.body.setAttribute('data-theme', theme);
+            safePlay('click');
             toggleMenu();
         }
-
-        // --- CORE LOGIC ---
-        let history = [];
-        window.onload = () => {
-            const saved = localStorage.getItem('vin_final_hist');
-            if(saved) {
-                history = JSON.parse(saved);
-                if(history.length) document.getElementById('welcome').style.display='none';
-                history.forEach(m => appendMsg(m.role, m.content, false));
-            }
-        };
 
         async function send() {
             const inp = document.getElementById('inp');
             const txt = inp.value.trim();
-            if(!txt) return;
+            if(!txt) return; // Don't send empty messages
 
+            safePlay('send'); // Try to play sound
+            
+            // UI Updates
             document.getElementById('welcome').style.display='none';
-            inp.value = ''; inp.style.height = 'auto';
+            inp.value = ''; 
+            inp.style.height = 'auto';
             
             appendMsg('user', txt);
             saveHist('user', txt);
 
             try {
                 const res = await fetch('/api/chat', {
-                    method: 'POST', headers: {'Content-Type': 'application/json'},
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({ message: txt, history: history })
                 });
+                
+                if(!res.ok) throw new Error("Server Error");
+                
                 const data = await res.json();
+                
                 setTimeout(() => {
-                    sound.receive();
+                    safePlay('receive');
                     appendMsg('ai', data.response);
                     saveHist('assistant', data.response);
-                }, 300);
-            } catch(e) { appendMsg('ai', "SYSTEM FAILURE."); }
+                }, 200);
+
+            } catch(e) {
+                appendMsg('ai', "SYSTEM ERROR: Check connection.");
+            }
         }
 
         function appendMsg(role, text, animate=true) {
             const div = document.createElement('div');
-            const isUser = role==='user';
+            const isUser = role === 'user';
             div.className = `flex ${isUser?'justify-end':'justify-start'} ${animate?'msg-enter':''} mb-4`;
             
             div.innerHTML = `
@@ -216,3 +201,30 @@
         }
 
         function saveHist(role, content) {
+            history.push({role, content});
+            localStorage.setItem('vin_v9_hist', JSON.stringify(history));
+        }
+
+        function clearHistory() {
+            if(confirm("Wipe local memory?")) {
+                localStorage.removeItem('vin_v9_hist');
+                location.reload();
+            }
+        }
+
+        // Enter Key Listener
+        document.getElementById('inp').addEventListener('keydown', (e) => {
+            if(e.key === 'Enter' && !e.shiftKey) { 
+                e.preventDefault(); 
+                send(); 
+            }
+        });
+        
+        // Auto-resize
+        document.getElementById('inp').addEventListener('input', function() {
+            this.style.height = 'auto'; 
+            this.style.height = (this.scrollHeight) + 'px';
+        });
+    </script>
+</body>
+</html>
