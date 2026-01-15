@@ -56,6 +56,10 @@ async def login(request: Request, username: str = Form(...), password: str = For
     return templates.TemplateResponse("login.html", {"request": request, "error": "INVALID CREDENTIALS"})
 
 @app.get("/logout")
+# --- KEEP-ALIVE ROUTE (Lightweight) ---
+@app.get("/ping")
+async def ping():
+    return {"status": "alive", "message": "I am awake"}
 async def logout(request: Request):
     request.session.clear()
     return RedirectResponse("/", status_code=303)
@@ -108,3 +112,4 @@ async def chat(request: Request):
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000)
+
