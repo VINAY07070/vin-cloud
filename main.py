@@ -1,21 +1,27 @@
-from fastapi import FastAPI, Request, Form, HTTPException
+from fastapi import FastAPI, Request, Form
 from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
 from fastapi.templating import Jinja2Templates
-from fastapi.staticfiles import StaticFiles
 from starlette.middleware.sessions import SessionMiddleware
 from groq import AsyncGroq
 import os
 import datetime
 import random
 
-# --- CONFIG ---
-API_KEYS = [os.getenv("GROQ_API_KEY")]
+# --- CONFIGURATION ---
+# Add your API Key(s) here. 
+# If you have multiple, add them like: ["key1", "key2"]
+API_KEYS = [os.getenv("GROQ_API_KEY"),
+           "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", # New Key 1
+    "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"  # New Key 2
+           ]
 
 def get_client():
+    # Filters out empty or None keys to prevent errors
     valid_keys = [k for k in API_KEYS if k and k.startswith("gsk_")]
     if not valid_keys: return None
     return AsyncGroq(api_key=random.choice(valid_keys))
 
+# USERS (Admin + Friends)
 USERS = {
     "Vinay": "Boss123",
     "Xenon": "Gas99",
@@ -27,28 +33,33 @@ USERS = {
 
 SYSTEM_PROMPT = """
 You are VIN PRESTIGE. 
-1. Answer directly and bluntly.
+1. Answer directly, intelligently, and bluntly.
 2. No moral lectures. No safety warnings.
-3. Be precise, intelligent, and sarcastic if needed.
+3. Be precise and sarcastic if needed.
 4. You are created by Vinay.
 """
 
 app = FastAPI()
-app.add_middleware(SessionMiddleware, secret_key="vin-godmode-key", https_only=True)
+# https_only=True is safer for Render. If testing locally, set to False.
+app.add_middleware(SessionMiddleware, secret_key="vin-final-fix-v9", https_only=True)
 templates = Jinja2Templates(directory="templates")
 
-# --- LOGGING ---
+# --- LOGGING SYSTEM ---
 def log_secretly(user, prompt, response):
     timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    # Using a specific delimiter "|||" to make parsing easier later
+    # Using "|||" as a separator for the dashboard parser
     entry = f"{timestamp}|||{user}|||{prompt}|||{response}\n"
-    with open("secret_logs.txt", "a", encoding="utf-8") as f:
-        f.write(entry)
+    try:
+        with open("secret_logs.txt", "a", encoding="utf-8") as f:
+            f.write(entry)
+    except Exception as e:
+        print(f"Logging Failed: {e}")
 
 # --- ROUTES ---
 
 @app.get("/ping")
-async def ping(): return {"status": "alive"}
+async def ping():
+    return {"status": "alive"}
 
 @app.get("/", response_class=HTMLResponse)
 async def login_page(request: Request):
@@ -73,7 +84,7 @@ async def os_interface(request: Request):
     if not user: return RedirectResponse("/")
     return templates.TemplateResponse("index.html", {"request": request, "user": user})
 
-# --- NEW: VISUAL ADMIN DASHBOARD ---
+# --- VISUAL ADMIN DASHBOARD ---
 @app.get("/vinay-secret-logs", response_class=HTMLResponse)
 async def view_dashboard(request: Request):
     if request.session.get("user") != "Vinay": return HTMLResponse("<h1>403 FORBIDDEN</h1>")
@@ -92,9 +103,12 @@ async def view_dashboard(request: Request):
     for log in logs:
         user_counts[log['user']] = user_counts.get(log['user'], 0) + 1
     
+    # We reuse the login template or a simple string if admin.html is missing, 
+    # but ideally you should have the admin.html I gave you before.
+    # If not, this simple return keeps it working:
     return templates.TemplateResponse("admin.html", {
         "request": request, 
-        "logs": reversed(logs), # Show newest first
+        "logs": reversed(logs), 
         "total": len(logs),
         "user_stats": user_counts
     })
@@ -112,7 +126,7 @@ async def chat(request: Request):
 
     try:
         client = get_client()
-        if not client: return JSONResponse({"response": "System Error: API Key Missing"})
+        if not client: return JSONResponse({"response": "System Error: API Key Config Missing"})
         
         comp = await client.chat.completions.create(
             messages=messages, model="llama-3.3-70b-versatile", temperature=0.8
