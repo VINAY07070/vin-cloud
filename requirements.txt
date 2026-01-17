@@ -6,3 +6,4 @@ groq
 aiofiles
 itsdangerous
 edge-tts
+werkzeug
