@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>VinOS - Access Portal</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='75' font-size='80'>⚡</text></svg>">
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Rajdhani:wght@400;600&display=swap" rel="stylesheet">
     <style>
@@ -20,28 +21,17 @@
         }
         .title-font { font-family: 'Orbitron', sans-serif; }
         
-        /* --- ENHANCED STARFIELD --- */
+        /* Enhanced Starfield */
         #stars { position: absolute; inset: 0; z-index: 0; }
-        .star { 
-            position: absolute; 
-            background: white; 
-            border-radius: 50%;
-        }
+        .star { position: absolute; background: white; border-radius: 50%; }
         .star-small { width: 1px; height: 1px; opacity: 0.5; animation: twinkle 3s infinite; }
         .star-medium { width: 2px; height: 2px; opacity: 0.7; animation: twinkle 4s infinite; }
         .star-large { width: 3px; height: 3px; opacity: 0.9; animation: twinkle 5s infinite; box-shadow: 0 0 4px white; }
         
-        @keyframes twinkle {
-            0%, 100% { opacity: 0.3; }
-            50% { opacity: 1; }
-        }
+        @keyframes twinkle { 0%, 100% { opacity: 0.3; } 50% { opacity: 1; } }
         
-        /* --- WARP ANIMATION --- */
-        .warp-star { 
-            position: absolute; 
-            background: linear-gradient(to bottom, white, transparent);
-            opacity: 0; 
-        }
+        /* Warp Animation */
+        .warp-star { position: absolute; background: linear-gradient(to bottom, white, transparent); opacity: 0; }
         .warp .warp-star { animation: warp 0.8s linear infinite; }
         @keyframes warp { 
             0% { opacity: 0; transform: scale(1) translateY(0); height: 2px; } 
@@ -49,19 +39,14 @@
             100% { opacity: 0; transform: scale(5) translateY(80vh); height: 100px; } 
         }
         
-        /* --- LOGIN BOX ANIMATIONS --- */
+        /* Animations */
         .fade-out { animation: fadeOut 1s forwards; }
-        @keyframes fadeOut { 
-            to { opacity: 0; transform: scale(1.2) translateY(-50px); filter: blur(10px); } 
-        }
+        @keyframes fadeOut { to { opacity: 0; transform: scale(1.2) translateY(-50px); filter: blur(10px); } }
 
         .slide-in { animation: slideIn 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
-        @keyframes slideIn {
-            from { opacity: 0; transform: translateY(30px) scale(0.95); }
-            to { opacity: 1; transform: translateY(0) scale(1); }
-        }
+        @keyframes slideIn { from { opacity: 0; transform: translateY(30px) scale(0.95); } to { opacity: 1; transform: translateY(0) scale(1); } }
 
-        /* --- GLASS MORPHISM --- */
+        /* Glass */
         .glass { 
             background: rgba(10, 10, 20, 0.4); 
             backdrop-filter: blur(20px); 
@@ -69,10 +54,8 @@
             box-shadow: 0 8px 32px rgba(139, 92, 246, 0.2);
         }
 
-        /* --- GLOW EFFECTS --- */
-        .glow-border {
-            position: relative;
-        }
+        /* Glow */
+        .glow-border { position: relative; }
         .glow-border::before {
             content: '';
             position: absolute;
@@ -85,15 +68,10 @@
             transition: opacity 0.3s;
             animation: gradient-shift 3s infinite;
         }
-        .glow-border:focus::before {
-            opacity: 1;
-        }
-        @keyframes gradient-shift {
-            0%, 100% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-        }
+        .glow-border:focus::before { opacity: 1; }
+        @keyframes gradient-shift { 0%, 100% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } }
 
-        /* --- BUTTON EFFECTS --- */
+        /* Button */
         .btn-connect {
             background: linear-gradient(135deg, rgba(99, 102, 241, 0.3) 0%, rgba(139, 92, 246, 0.3) 100%);
             border: 1px solid rgba(139, 92, 246, 0.5);
@@ -112,40 +90,39 @@
             transform: translate(-50%, -50%);
             transition: width 0.6s, height 0.6s;
         }
-        .btn-connect:hover::before {
-            width: 300px;
-            height: 300px;
-        }
-        .btn-connect:active {
-            transform: scale(0.98);
+        .btn-connect:hover::before { width: 300px; height: 300px; }
+        .btn-connect:active { transform: scale(0.98); }
+
+        /* Logo Animation */
+        @keyframes float-logo { 0%, 100% { transform: translateY(0px) rotate(0deg); } 50% { transform: translateY(-10px) rotate(2deg); } }
+        @keyframes pulse-ring { 0% { box-shadow: 0 0 0 0 rgba(139, 92, 246, 0.7); } 100% { box-shadow: 0 0 0 20px rgba(139, 92, 246, 0); } }
+
+        /* Signature */
+        .signature {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 10px;
+            opacity: 0.3;
+            color: #888;
+            font-style: italic;
+            text-align: center;
         }
 
-        /* --- FLOATING LOGO --- */
-        @keyframes float-logo {
-            0%, 100% { transform: translateY(0px) rotate(0deg); }
-            50% { transform: translateY(-10px) rotate(2deg); }
-        }
-
-        /* --- MOBILE RESPONSIVENESS --- */
+        /* Mobile */
         @media (max-width: 640px) {
             #loginBox { width: 90%; padding: 2rem; }
             .title-font { font-size: 2rem; }
         }
-
-        /* --- PULSE ANIMATION --- */
-        @keyframes pulse-ring {
-            0% { box-shadow: 0 0 0 0 rgba(139, 92, 246, 0.7); }
-            100% { box-shadow: 0 0 0 20px rgba(139, 92, 246, 0); }
-        }
     </style>
 </head>
 <body id="body">
-    <!-- Enhanced Starfield -->
     <div id="stars"></div>
 
     <!-- Login Box -->
     <div id="loginBox" class="glass z-10 p-8 md:p-10 rounded-3xl w-full max-w-md text-center relative slide-in">
-        <!-- Logo with animation -->
+        <!-- Logo -->
         <div class="mb-6 inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 shadow-2xl" style="animation: float-logo 4s infinite ease-in-out, pulse-ring 2s infinite;">
             <svg class="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
@@ -156,10 +133,10 @@
         <h1 class="title-font text-4xl md:text-5xl font-bold mb-2 tracking-wider bg-gradient-to-r from-white via-purple-200 to-white bg-clip-text text-transparent">
             VIN<span class="text-purple-400">OS</span>
         </h1>
-        <p class="text-[10px] text-gray-400 mb-2 uppercase tracking-[0.4em]">Neural Interface</p>
-        <p class="text-[9px] text-purple-500/60 mb-8 uppercase tracking-widest">Architect: V.K.</p>
+        <p class="text-[10px] text-gray-400 mb-2 uppercase tracking-[0.4em]">Neural Interface v4.5</p>
+        <p class="text-[9px] text-purple-500/60 mb-8 uppercase tracking-widest">Architect: Vinay Kumar</p>
 
-        <!-- Login Form -->
+        <!-- Form -->
         <form action="/login" method="post" onsubmit="handleLogin(event)" class="space-y-5">
             <div class="relative group">
                 <input 
@@ -191,7 +168,7 @@
             </button>
         </form>
 
-        <!-- Error Message -->
+        <!-- Error -->
         {% if error %}
         <div class="mt-6 text-red-400 text-xs md:text-sm border border-red-500/30 p-3 bg-red-900/20 rounded-lg backdrop-blur-sm slide-in" style="animation-delay: 0.2s;">
             <svg class="w-4 h-4 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -203,15 +180,16 @@
 
         <!-- Footer -->
         <div class="mt-8 text-[9px] text-gray-600 uppercase tracking-wider">
-            Secure Neural Link Protocol v4.5
+            Secure Neural Link Protocol
         </div>
     </div>
 
+    <!-- Signature -->
+    <div class="signature">⚡ Crafted by Vinay</div>
+
     <script>
-        // Create enhanced starfield
+        // Starfield
         const starsContainer = document.getElementById('stars');
-        
-        // Create static stars
         for(let i = 0; i < 200; i++) {
             const star = document.createElement('div');
             const size = Math.random();
@@ -229,28 +207,20 @@
             const box = document.getElementById('loginBox');
             const stars = document.getElementById('stars');
             
-            // Button animation
             btnText.innerText = "VERIFYING";
             btn.classList.add('bg-purple-600', 'text-white');
             btn.disabled = true;
             
-            // Create loading dots
             let dots = 0;
             const loadingInterval = setInterval(() => {
                 dots = (dots + 1) % 4;
                 btnText.innerText = "VERIFYING" + ".".repeat(dots);
             }, 300);
             
-            // Box fade out
-            setTimeout(() => {
-                box.classList.add('fade-out');
-            }, 500);
+            setTimeout(() => { box.classList.add('fade-out'); }, 500);
             
-            // Warp effect
             setTimeout(() => {
                 stars.classList.add('warp');
-                
-                // Create warp stars
                 for(let i = 0; i < 60; i++) {
                     const warpStar = document.createElement('div');
                     warpStar.className = 'warp-star';
@@ -262,7 +232,6 @@
                 }
             }, 700);
 
-            // Submit form
             setTimeout(() => {
                 clearInterval(loadingInterval);
                 e.target.submit();
@@ -272,25 +241,17 @@
         // Prevent double submission
         document.querySelector('form').addEventListener('submit', function(e) {
             const btn = document.getElementById('submitBtn');
-            if(btn.disabled) {
+            if(btn.disabled && e.submitter === btn) {
                 e.preventDefault();
                 return false;
             }
         });
 
-        // Enter key support
-        document.addEventListener('keydown', function(e) {
-            if(e.key === 'Enter' && document.activeElement.tagName === 'INPUT') {
-                e.preventDefault();
-                document.querySelector('form').requestSubmit();
-            }
-        });
-
-        // Touch improvements for mobile
+        // Mobile improvements
         if('ontouchstart' in window) {
             document.body.style.webkitTouchCallout = 'none';
             document.querySelectorAll('input').forEach(input => {
-                input.style.fontSize = '16px'; // Prevents zoom on iOS
+                input.style.fontSize = '16px';
             });
         }
     </script>
