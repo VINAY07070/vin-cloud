@@ -18,10 +18,8 @@
             --glow: 0 0 30px rgba(99, 102, 241, 0.15); 
             --border: 1px solid rgba(255,255,255,0.08);
             --sig-color: rgba(255, 255, 255, 0.1);
-            --scanline: none;
         }
 
-        /* THEME: CYBERPUNK (Glitch & Neon) */
         [data-theme="cyberpunk"] { 
             --bg: #05000a; --panel: #1a0b2e; --text: #ffccff; --accent: #d946ef; 
             --font-main: 'Orbitron', sans-serif; --radius: 4px;
@@ -29,20 +27,15 @@
             --border: 1px solid rgba(217, 70, 239, 0.3);
             --sig-color: rgba(217, 70, 239, 0.2);
         }
-        [data-theme="cyberpunk"] .msg-enter { animation: glitchAnim 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94) both; }
         
-        /* THEME: MATRIX (Hacker Terminal) */
         [data-theme="matrix"] { 
             --bg: #000; --panel: #001100; --text: #00ff41; --accent: #008f11; 
             --font-main: 'Share Tech Mono', monospace; --radius: 0px;
             --glow: 0 0 15px rgba(0, 255, 65, 0.2);
             --border: 1px solid rgba(0, 255, 65, 0.2);
             --sig-color: rgba(0, 255, 0, 0.1);
-            --scanline: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
         }
-        [data-theme="matrix"] .msg-enter { animation: typeAnim 0.3s steps(15, end); }
 
-        /* THEME: LIGHT (Laboratory) */
         [data-theme="light"] { 
             --bg: #f3f4f6; --panel: #ffffff; --text: #1f2937; --accent: #4f46e5; 
             --font-main: 'Outfit', sans-serif; --radius: 20px;
@@ -51,81 +44,42 @@
             --sig-color: rgba(0, 0, 0, 0.08);
         }
 
-        /* --- 2. GLOBAL STYLES --- */
         body { background: var(--bg); color: var(--text); font-family: var(--font-main); overflow: hidden; transition: 0.5s; }
         
-        .scanline-overlay { position: fixed; inset: 0; pointer-events: none; background: var(--scanline); background-size: 100% 2px, 3px 100%; z-index: 999; }
-        
-        /* STAGGERED ENTRANCE ANIMATIONS (Fixed) */
+        /* ANIMATIONS */
         .anim-header { animation: slideDown 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards; transform: translateY(-100%); opacity: 0; }
         .anim-chat { animation: fadeIn 1s ease 0.5s forwards; opacity: 0; }
         .anim-input { animation: slideUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.3s forwards; transform: translateY(100%); opacity: 0; }
-
         @keyframes slideDown { to { transform: translateY(0); opacity: 1; } }
         @keyframes slideUp { to { transform: translateY(0); opacity: 1; } }
         @keyframes fadeIn { to { opacity: 1; } }
-        @keyframes glitchAnim { 0% { transform: translate(-5px, 5px); opacity: 0; } 20% { transform: translate(5px, -5px); } 100% { transform: translate(0); opacity: 1; } }
-        @keyframes typeAnim { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* SIGNATURE (Mobile Optimized) */
+        /* SIGNATURE (Mobile Safe) */
         .vinay-sig { position: fixed; font-family: 'Dancing Script', cursive; color: var(--sig-color); pointer-events: none; z-index: 0; user-select: none; animation: floatSig 6s ease-in-out infinite; }
         @media (max-width: 768px) { .vinay-sig { top: 80px; right: 20px; font-size: 2.5rem; transform: rotate(-5deg); } }
         @media (min-width: 769px) { .vinay-sig { bottom: 30px; right: 40px; font-size: 4rem; transform: rotate(-10deg); } }
         @keyframes floatSig { 0%, 100% { transform: translateY(0) rotate(-5deg); } 50% { transform: translateY(-10px) rotate(-5deg); } }
 
-        /* --- 3. PREMIUM UI ELEMENTS --- */
-        /* Input Glow Container */
-        .input-glow-container {
-            position: relative;
-            background: var(--panel);
-            border: var(--border);
-            border-radius: var(--radius);
-            transition: all 0.3s;
-        }
-        .input-glow-container:focus-within {
-            box-shadow: var(--glow);
-            border-color: var(--accent);
-            transform: scale(1.01);
-        }
-
-        /* Message Bubbles */
+        /* UI ELEMENTS */
+        .input-glow-container { position: relative; background: var(--panel); border: var(--border); border-radius: var(--radius); transition: all 0.3s; }
+        .input-glow-container:focus-within { box-shadow: var(--glow); border-color: var(--accent); transform: scale(1.01); }
         .msg-enter { animation: slideUpMsg 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards; opacity: 0; transform: translateY(20px); }
         @keyframes slideUpMsg { to { opacity: 1; transform: translateY(0); } }
-        
         .msg-user { background: var(--accent); color: #fff; border-radius: 18px 18px 4px 18px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
         .msg-ai { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); border-radius: 18px 18px 18px 4px; color: var(--text); }
         [data-theme="light"] .msg-ai { background: #fff; border-color: rgba(0,0,0,0.05); color: #333; }
-
-        /* Action Buttons (Premium Look) */
-        .action-btn {
-            background: rgba(255,255,255,0.05);
-            border: 1px solid rgba(255,255,255,0.1);
-            color: var(--text);
-            padding: 8px 16px;
-            border-radius: 99px;
-            font-size: 11px;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            transition: all 0.2s;
-            display: flex; align-items: center; gap: 6px;
-        }
+        
+        .action-btn { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: var(--text); padding: 8px 16px; border-radius: 99px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; transition: all 0.2s; display: flex; align-items: center; gap: 6px; }
         [data-theme="light"] .action-btn { background: #fff; border-color: #eee; color: #555; }
         .action-btn:hover { background: var(--accent); color: white; border-color: var(--accent); transform: translateY(-1px); }
-
-        /* Settings Menu */
-        #settingsMenu { transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); background: var(--panel); border-bottom: var(--border); }
+        
+        #settingsMenu { transition: transform 0.3s; background: var(--panel); border-bottom: var(--border); }
         .hidden-menu { transform: translateY(-150%); }
-
-        /* Voice Waves */
         .wave-bar { width: 3px; background: var(--accent); animation: wave 0.5s ease-in-out infinite; height: 10px; }
         @keyframes wave { 0%, 100% { height: 10px; } 50% { height: 25px; } }
-        
     </style>
 </head>
 <body class="h-screen flex flex-col relative" data-theme="stealth">
-
-    <div class="scanline-overlay"></div>
     <div class="vinay-sig">Vinay</div>
 
     <div class="h-16 backdrop-blur-md flex items-center justify-between px-5 sticky top-0 z-50 anim-header" style="border-bottom: var(--border)">
@@ -133,31 +87,20 @@
             <img src="https://t4.ftcdn.net/jpg/03/33/10/19/360_F_333101957_kYiZiasjb6SXJWqYchZ36H5MuFFsKtfv.jpg" class="w-8 h-8 rounded-full border border-white/20 object-cover shadow-lg">
             <div class="text-xl font-bold tracking-tight">Vin<span style="color: var(--accent)">OS</span></div>
             <div id="aiSpeaking" class="flex gap-1 opacity-0 transition-opacity duration-300 ml-2">
-                <div class="wave-bar" style="animation-delay: 0s"></div>
-                <div class="wave-bar" style="animation-delay: 0.1s"></div>
-                <div class="wave-bar" style="animation-delay: 0.2s"></div>
+                <div class="wave-bar" style="animation-delay: 0s"></div><div class="wave-bar" style="animation-delay: 0.1s"></div><div class="wave-bar" style="animation-delay: 0.2s"></div>
             </div>
         </div>
-        
         <div class="flex gap-2">
-            <button onclick="safePlay('click'); clearHistory()" class="action-btn">
-                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-                Clear
-            </button>
-            <button onclick="safePlay('click'); toggleMenu()" class="action-btn">
-                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"></path></svg>
-                Themes
-            </button>
-            <a href="/logout" onclick="safePlay('click')" class="action-btn" style="border-color: rgba(239, 68, 68, 0.3); color: #ef4444;">
-                Exit
-            </a>
+            <button onclick="safePlay('click'); clearHistory()" class="action-btn">Clear</button>
+            <button onclick="safePlay('click'); toggleMenu()" class="action-btn">Themes</button>
+            <a href="/logout" onclick="safePlay('click')" class="action-btn" style="border-color: rgba(239, 68, 68, 0.3); color: #ef4444;">Exit</a>
         </div>
     </div>
 
     <div id="settingsMenu" class="absolute top-16 left-0 w-full p-5 z-40 hidden-menu shadow-2xl">
         <div class="flex justify-center gap-4 flex-wrap">
-            <button onclick="setTheme('stealth')" class="px-5 py-3 rounded-xl border border-gray-700 bg-gray-900 text-white text-xs font-bold uppercase hover:scale-105 transition shadow-lg">Stealth</button>
-            <button onclick="setTheme('light')" class="px-5 py-3 rounded-xl border border-gray-200 bg-white text-black text-xs font-bold uppercase hover:scale-105 transition shadow-lg">Light</button>
+            <button onclick="setTheme('stealth')" class="px-5 py-3 rounded-xl border border-gray-700 bg-gray-900 text-white text-xs font-bold uppercase hover:scale-105 transition">Stealth</button>
+            <button onclick="setTheme('light')" class="px-5 py-3 rounded-xl border border-gray-200 bg-white text-black text-xs font-bold uppercase hover:scale-105 transition">Light</button>
             <button onclick="setTheme('cyberpunk')" class="px-5 py-3 rounded-xl border border-fuchsia-500 bg-fuchsia-950 text-fuchsia-300 text-xs font-bold uppercase hover:scale-105 transition shadow-[0_0_15px_#d946ef]">Cyberpunk</button>
             <button onclick="setTheme('matrix')" class="px-5 py-3 rounded-xl border border-green-500 bg-black text-green-400 text-xs font-bold uppercase hover:scale-105 transition font-mono shadow-[0_0_15px_#00ff41]">Matrix</button>
         </div>
@@ -179,9 +122,7 @@
                 <div id="micPulse" class="absolute inset-0 bg-indigo-500/10 rounded-xl hidden animate-pulse"></div>
                 <svg class="w-5 h-5 relative z-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"></path></svg>
             </button>
-
             <textarea id="inp" rows="1" class="flex-1 bg-transparent placeholder-zinc-500 text-sm p-4 focus:outline-none resize-none max-h-32 transition-colors" style="color: var(--text)" placeholder="Enter command..."></textarea>
-            
             <button onclick="send()" class="p-4 rounded-xl text-white shadow-lg transition transform active:scale-90 hover:opacity-90" style="background-color: var(--accent); border-radius: var(--radius)">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14M12 5l7 7-7 7"></path></svg>
             </button>
@@ -189,46 +130,18 @@
     </div>
 
     <script>
-        // --- 1. SOUND FX ENGINE (RESTORED) ---
-        class SoundFX {
-            constructor() { try { this.ctx = new (window.AudioContext || window.webkitAudioContext)(); } catch(e) { this.ctx = null; } }
-            play(freq, type, dur) {
-                if(!this.ctx) return;
-                try {
-                    if(this.ctx.state === 'suspended') this.ctx.resume();
-                    const osc = this.ctx.createOscillator(); const gain = this.ctx.createGain();
-                    osc.type = type; osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
-                    gain.gain.setValueAtTime(0.05, this.ctx.currentTime);
-                    gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime+dur);
-                    osc.connect(gain); gain.connect(this.ctx.destination);
-                    osc.start(); osc.stop(this.ctx.currentTime+dur);
-                } catch(e) {}
-            }
-        }
+        class SoundFX { constructor() { try { this.ctx = new (window.AudioContext || window.webkitAudioContext)(); } catch(e) { this.ctx = null; } } play(freq, type, dur) { if(!this.ctx) return; try { if(this.ctx.state === 'suspended') this.ctx.resume(); const osc = this.ctx.createOscillator(); const gain = this.ctx.createGain(); osc.type = type; osc.frequency.setValueAtTime(freq, this.ctx.currentTime); gain.gain.setValueAtTime(0.05, this.ctx.currentTime); gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime+dur); osc.connect(gain); gain.connect(this.ctx.destination); osc.start(); osc.stop(this.ctx.currentTime+dur); } catch(e) {} } }
         const sound = new SoundFX();
-        function safePlay(t) { 
-            if(t==='click') sound.play(800,'sine',0.1); 
-            if(t==='send') sound.play(600,'triangle',0.15); 
-            if(t==='rec') sound.play(400,'sine',0.3); 
-        }
+        function safePlay(t) { if(t==='click') sound.play(800,'sine',0.1); if(t==='send') sound.play(600,'triangle',0.15); if(t==='rec') sound.play(400,'sine',0.3); }
 
-        // --- 2. VOICE ENGINE (OPTIMIZED) ---
         const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
         const recognition = Recognition ? new Recognition() : null;
         let isListening = false;
-
-        if (recognition) {
-            recognition.continuous = false; recognition.lang = 'en-US';
-            recognition.onstart = () => { isListening = true; document.getElementById('micPulse').classList.remove('hidden'); document.getElementById('inp').placeholder = "Listening..."; };
-            recognition.onend = () => { isListening = false; document.getElementById('micPulse').classList.add('hidden'); document.getElementById('inp').placeholder = "Enter command..."; };
-            recognition.onresult = (event) => { document.getElementById('inp').value = event.results[0][0].transcript; send(true); };
-        }
+        if (recognition) { recognition.continuous = false; recognition.lang = 'en-US'; recognition.onstart = () => { isListening = true; document.getElementById('micPulse').classList.remove('hidden'); document.getElementById('inp').placeholder = "Listening..."; }; recognition.onend = () => { isListening = false; document.getElementById('micPulse').classList.add('hidden'); document.getElementById('inp').placeholder = "Enter command..."; }; recognition.onresult = (event) => { document.getElementById('inp').value = event.results[0][0].transcript; send(true); }; }
         function toggleMic() { if (!recognition) return alert("Browser does not support voice."); isListening ? recognition.stop() : recognition.start(); }
 
         async function playVoice(text) {
-            // IMMEDIATE VISUAL FEEDBACK (Makes it feel faster)
             document.getElementById('aiSpeaking').classList.remove('opacity-0');
-            
             try {
                 const res = await fetch('/api/tts', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ text: text }) });
                 const blob = await res.blob();
@@ -238,9 +151,8 @@
             } catch(e) { document.getElementById('aiSpeaking').classList.add('opacity-0'); }
         }
 
-        // --- 3. CORE LOGIC ---
         let history = [];
-        try { const saved = localStorage.getItem('vin_ult_hist'); if(saved) { history = JSON.parse(saved); if(history.length) { document.getElementById('welcome').style.display='none'; history.forEach(m=>appendMsg(m.role,m.content,false)); } } } catch(e){}
+        try { const saved = localStorage.getItem('vin_final_hist'); if(saved) { history = JSON.parse(saved); if(history.length) { document.getElementById('welcome').style.display='none'; history.forEach(m=>appendMsg(m.role,m.content,false)); } } } catch(e){}
 
         function toggleMenu() { document.getElementById('settingsMenu').classList.toggle('hidden-menu'); }
         function setTheme(t) { document.body.setAttribute('data-theme', t); safePlay('click'); toggleMenu(); }
@@ -248,46 +160,30 @@
         async function send(autoVoice = false) {
             const inp = document.getElementById('inp'); const txt = inp.value.trim();
             if(!txt) return;
-            
-            safePlay('send');
-            document.getElementById('welcome').style.display='none';
-            inp.value=''; inp.style.height='auto';
-            appendMsg('user', txt); saveHist('user', txt);
-            
-            // SHOW LOADING WAVEFORM IMMEDIATELY IF VOICE
+            safePlay('send'); document.getElementById('welcome').style.display='none'; inp.value=''; inp.style.height='auto'; appendMsg('user', txt); saveHist('user', txt);
             if(autoVoice) document.getElementById('aiSpeaking').classList.remove('opacity-0');
 
             try {
                 const res = await fetch('/api/chat', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ message: txt, history: history }) });
                 const data = await res.json();
-                
-                setTimeout(() => { 
-                    safePlay('rec');
-                    appendMsg('ai', data.response); saveHist('assistant', data.response);
-                    if(autoVoice) playVoice(data.response);
-                    else document.getElementById('aiSpeaking').classList.add('opacity-0'); // Stop wave if text only
-                }, 200);
+                setTimeout(() => { safePlay('rec'); appendMsg('ai', data.response); saveHist('assistant', data.response); if(autoVoice) playVoice(data.response); else document.getElementById('aiSpeaking').classList.add('opacity-0'); }, 200);
             } catch(e) { appendMsg('ai', "SYSTEM ERROR."); document.getElementById('aiSpeaking').classList.add('opacity-0'); }
         }
 
         function appendMsg(role, text, animate=true) {
             const div = document.createElement('div'); const isUser = role==='user';
             div.className = `flex ${isUser?'justify-end':'justify-start'} mb-4`;
-            
-            // Adaptive Speaker Icon
             const iconColor = document.body.getAttribute('data-theme') === 'light' ? 'text-black/30 hover:text-black' : 'text-white/30 hover:text-white';
             const speakerBtn = !isUser ? `<button onclick="playVoice(this.parentNode.innerText); safePlay('click')" class="absolute -right-8 top-2 ${iconColor} transition"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"></path></svg></button>` : '';
-
             div.innerHTML = `<div class="flex flex-col ${isUser?'items-end':'items-start'} max-w-[85%] relative group ${animate?'msg-enter':''}"><div class="p-4 text-[15px] leading-relaxed ${isUser?'msg-user':'msg-ai'}">${marked.parse(text)}</div>${speakerBtn}</div>`;
             document.getElementById('chatFeed').appendChild(div);
             window.scrollTo(0, document.body.scrollHeight);
         }
 
-        function saveHist(r, c) { history.push({role:r, content:c}); localStorage.setItem('vin_ult_hist', JSON.stringify(history)); }
-        function clearHistory() { if(confirm("Clear local memory?")) { localStorage.removeItem('vin_ult_hist'); location.reload(); } }
+        function saveHist(r, c) { history.push({role:r, content:c}); localStorage.setItem('vin_final_hist', JSON.stringify(history)); }
+        function clearHistory() { if(confirm("Clear local memory?")) { localStorage.removeItem('vin_final_hist'); location.reload(); } }
 
         document.getElementById('inp').addEventListener('keydown', (e) => { if(e.key==='Enter' && !e.shiftKey) { e.preventDefault(); send(); } });
-        document.getElementById('inp').addEventListener('input', function() { this.style.height='auto'; this.style.height=(this.scrollHeight)+'px'; });
     </script>
 </body>
 </html>
