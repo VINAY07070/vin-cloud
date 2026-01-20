@@ -11,36 +11,54 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <style>
+        /* --- THEME ENGINE --- */
         :root { --bg: #030303; --panel: #0e0e11; --text: #e5e5e5; --accent: #6366f1; --radius: 24px; --border: 1px solid rgba(255,255,255,0.08); }
         [data-theme="cyberpunk"] { --bg: #05000a; --panel: #1a0b2e; --text: #ffccff; --accent: #d946ef; --radius: 4px; --border: 1px solid rgba(217, 70, 239, 0.3); }
         [data-theme="matrix"] { --bg: #000; --panel: #001100; --text: #00ff41; --accent: #008f11; --radius: 0px; --border: 1px solid rgba(0, 255, 65, 0.2); }
-        
+        [data-theme="light"] { --bg: #f3f4f6; --panel: #ffffff; --text: #1f2937; --accent: #4f46e5; --radius: 20px; --border: 1px solid rgba(0,0,0,0.05); }
+
         body { background: var(--bg); color: var(--text); font-family: 'Outfit', sans-serif; overflow: hidden; transition: background 0.5s; }
         [data-theme="matrix"] body { font-family: 'Share Tech Mono', monospace; }
 
+        /* MATRIX CANVAS */
         #matrixCanvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; opacity: 0; transition: opacity 1s; pointer-events: none; }
         [data-theme="matrix"] #matrixCanvas { opacity: 0.3; }
 
+        /* AUDIO VISUALIZER */
+        #visualizer { width: 100px; height: 30px; }
+
+        /* UI ELEMENTS */
         .input-box { background: var(--panel); border: var(--border); border-radius: var(--radius); transition: 0.3s; }
         .input-box:focus-within { border-color: var(--accent); box-shadow: 0 0 20px rgba(99, 102, 241, 0.15); }
         
         .msg-user { background: var(--accent); color: white; border-radius: 18px 18px 4px 18px; max-width: 85%; }
-        .msg-ai { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.05); border-radius: 18px 18px 18px 4px; max-width: 85%; }
+        .msg-ai { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.05); border-radius: 18px 18px 18px 4px; max-width: 85%; position: relative; }
+        [data-theme="light"] .msg-ai { background: white; border-color: #eee; color: #333; }
 
-        .msg-ai img, .msg-user img { border-radius: 12px; margin-top: 10px; max-width: 100%; }
+        /* IMAGES & ANIMATION */
+        .msg-ai img, .msg-user img { border-radius: 12px; margin-top: 10px; max-width: 100%; box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
         
+        @keyframes scan { 
+            0% { clip-path: inset(0 100% 0 0); opacity: 0.5; filter: hue-rotate(90deg); } 
+            100% { clip-path: inset(0 0 0 0); opacity: 1; filter: hue-rotate(0deg); } 
+        }
+        .img-scan { animation: scan 1.5s cubic-bezier(0.19, 1, 0.22, 1) forwards; border: 2px solid var(--accent); }
+
+        /* VISION PREVIEW */
         #visionPreview { display: none; width: 40px; height: 40px; border-radius: 8px; object-fit: cover; border: 2px solid var(--accent); margin-right: 10px; }
 
+        /* MENUS */
         #settingsMenu, #personaMenu { transform: translateY(-150%); transition: 0.3s; background: var(--panel); border-bottom: var(--border); }
         .menu-open { transform: translateY(0) !important; }
         
         .active-persona { background: var(--accent); color: white; border-color: var(--accent); }
 
+        /* ICONS */
         .icon-btn { cursor: pointer; transition: 0.2s; opacity: 0.7; }
         .icon-btn:hover { opacity: 1; transform: scale(1.1); color: var(--accent); }
         .mic-active { color: #ef4444 !important; animation: pulse 1s infinite; }
         @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
-
+        
         .speaker-icon {
             display: inline-flex; align-items: center; justify-content: center;
             width: 24px; height: 24px; border-radius: 50%;
@@ -58,11 +76,12 @@
         <div class="flex items-center gap-3">
             <img src="https://t4.ftcdn.net/jpg/03/33/10/19/360_F_333101957_kYiZiasjb6SXJWqYchZ36H5MuFFsKtfv.jpg" class="w-8 h-8 rounded-full shadow-lg">
             <div class="text-xl font-bold">Vin<span style="color: var(--accent)">OS</span></div>
+            <canvas id="visualizer"></canvas>
         </div>
         <div class="flex gap-2">
-            <button onclick="togglePersona()" class="px-3 py-1 rounded-full text-xs font-bold bg-white/5 border border-white/10 hover:bg-white/10">BRAIN</button>
-            <button onclick="toggleMenu()" class="px-3 py-1 rounded-full text-xs font-bold bg-white/5 border border-white/10 hover:bg-white/10">THEME</button>
-            <a href="/logout" class="px-3 py-1 rounded-full text-xs font-bold text-red-500 border border-red-500/30">EXIT</a>
+            <button onclick="togglePersona()" class="px-3 py-1 rounded-full text-xs font-bold bg-white/5 border border-white/10 hover:bg-white/10 uppercase tracking-wider">Brain</button>
+            <button onclick="toggleMenu()" class="px-3 py-1 rounded-full text-xs font-bold bg-white/5 border border-white/10 hover:bg-white/10 uppercase tracking-wider">Theme</button>
+            <a href="/logout" class="px-3 py-1 rounded-full text-xs font-bold text-red-500 border border-red-500/30 hover:bg-red-500/10">Exit</a>
         </div>
     </div>
 
@@ -70,6 +89,7 @@
         <button onclick="setTheme('stealth')" class="p-2 text-xs bg-gray-900 border border-gray-700 rounded text-white">Stealth</button>
         <button onclick="setTheme('matrix')" class="p-2 text-xs bg-black border border-green-500 text-green-500 font-mono">Matrix</button>
         <button onclick="setTheme('cyberpunk')" class="p-2 text-xs bg-purple-900 border border-purple-500 text-purple-200">Cyber</button>
+        <button onclick="setTheme('light')" class="p-2 text-xs bg-white border border-gray-200 text-black">Light</button>
     </div>
 
     <div id="personaMenu" class="absolute top-16 left-0 w-full p-4 z-40 shadow-2xl flex justify-center gap-3 bg-black/90">
@@ -80,6 +100,7 @@
     <div id="chatFeed" class="flex-1 overflow-y-auto p-4 space-y-6 pb-32 scroll-smooth z-10">
         <div id="welcome" class="h-full flex flex-col items-center justify-center opacity-30 select-none">
             <h1 class="text-3xl font-bold tracking-tight">System Online</h1>
+            <p class="text-xs mt-2 uppercase tracking-[0.3em]">Vision • Audio • Logic</p>
         </div>
     </div>
 
@@ -89,29 +110,34 @@
                 <i class="fas fa-image text-lg"></i>
             </button>
             <input type="file" id="fileInput" accept="image/*" class="hidden" onchange="handleFileSelect(this)">
-            <img id="visionPreview">
             
+            <img id="visionPreview">
+
             <textarea id="inp" rows="1" class="flex-1 bg-transparent placeholder-zinc-500 text-sm p-3 focus:outline-none resize-none max-h-32" style="color: var(--text)" placeholder="Enter command..."></textarea>
             
             <button id="mic-btn" onclick="toggleMic()" class="p-3 text-zinc-500 hover:text-red-500 transition icon-btn">
                 <i class="fas fa-microphone text-lg"></i>
             </button>
-            <button onclick="send()" class="p-3 rounded-xl text-white shadow-lg transition active:scale-90" style="background-color: var(--accent)">
+
+            <button onclick="send()" class="p-3 rounded-xl text-white shadow-lg transition active:scale-90 hover:opacity-90" style="background-color: var(--accent)">
                 <i class="fas fa-paper-plane text-lg"></i>
             </button>
         </div>
     </div>
 
     <script>
+        // --- 1. STATE & SETUP ---
         let currentPersona = "roaster";
         let history = [];
         let selectedFile = null;
         
-        // Matrix Rain
+        // --- 2. MATRIX RAIN EFFECT ---
         const canvas = document.getElementById('matrixCanvas');
         const ctx = canvas.getContext('2d');
         canvas.width = window.innerWidth; canvas.height = window.innerHeight;
-        const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+        const katakana = 'アァカサタナハマヤャラワガザダバパイィキシチニヒミリヰギジヂビピウゥクスツヌフムユュルグズブヅプエェケセテネヘメレヱゲゼデベペオォコソトノホモヨョロヲゴゾドボポヴッン';
+        const latin = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+        const alphabet = katakana + latin;
         const fontSize = 16;
         const columns = canvas.width/fontSize;
         const rainDrops = Array(Math.floor(columns)).fill(1);
@@ -129,15 +155,80 @@
             }
         }
         let matrixInterval;
+        
+        // --- 3. AUDIO VISUALIZER & MIC ---
+        const visCanvas = document.getElementById('visualizer');
+        const visCtx = visCanvas.getContext('2d');
+        let audioCtx, analyser, source;
+        
+        function setupAudio(audioElement) {
+            if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            if(audioCtx.state === 'suspended') audioCtx.resume();
+            if(!analyser) {
+                analyser = audioCtx.createAnalyser();
+                analyser.fftSize = 64; 
+                source = audioCtx.createMediaElementSource(audioElement);
+                source.connect(analyser);
+                analyser.connect(audioCtx.destination);
+                drawVisualizer();
+            }
+        }
 
+        function drawVisualizer() {
+            requestAnimationFrame(drawVisualizer);
+            const bufferLength = analyser.frequencyBinCount;
+            const dataArray = new Uint8Array(bufferLength);
+            analyser.getByteFrequencyData(dataArray);
+            visCtx.clearRect(0, 0, visCanvas.width, visCanvas.height);
+            const barWidth = (visCanvas.width / bufferLength) * 2.5;
+            let barHeight, x = 0;
+            for(let i = 0; i < bufferLength; i++) {
+                barHeight = dataArray[i] / 2;
+                visCtx.fillStyle = getComputedStyle(document.body).getPropertyValue('--accent');
+                visCtx.fillRect(x, visCanvas.height - barHeight, barWidth, barHeight);
+                x += barWidth + 1;
+            }
+        }
+
+        // MIC FUNCTIONALITY
+        function toggleMic() {
+            if (!('webkitSpeechRecognition' in window)) {
+                alert("Speech recognition not supported in this browser. Use Chrome.");
+                return;
+            }
+            const recognition = new webkitSpeechRecognition();
+            const micBtn = document.getElementById('mic-btn');
+            
+            recognition.lang = 'en-US';
+            recognition.interimResults = false;
+            recognition.maxAlternatives = 1;
+
+            recognition.onstart = () => { micBtn.classList.add('mic-active'); };
+            recognition.onend = () => { micBtn.classList.remove('mic-active'); };
+            
+            recognition.onresult = (event) => {
+                const transcript = event.results[0][0].transcript;
+                document.getElementById('inp').value = transcript;
+                send(); // Auto send after speaking
+            };
+            
+            recognition.start();
+        }
+
+        // --- 4. CORE FUNCTIONS ---
         function toggleMenu() { document.getElementById('settingsMenu').classList.toggle('menu-open'); document.getElementById('personaMenu').classList.remove('menu-open'); }
         function togglePersona() { document.getElementById('personaMenu').classList.toggle('menu-open'); document.getElementById('settingsMenu').classList.remove('menu-open'); }
         
         function setTheme(t) { 
             document.body.setAttribute('data-theme', t); 
             toggleMenu();
-            if(t === 'matrix') { clearInterval(matrixInterval); matrixInterval = setInterval(drawMatrix, 30); } 
-            else { clearInterval(matrixInterval); ctx.clearRect(0,0,canvas.width,canvas.height); }
+            if(t === 'matrix') {
+                clearInterval(matrixInterval);
+                matrixInterval = setInterval(drawMatrix, 30);
+            } else {
+                clearInterval(matrixInterval);
+                ctx.clearRect(0,0,canvas.width,canvas.height);
+            }
         }
 
         function setPersona(p) {
@@ -146,6 +237,7 @@
             document.getElementById('btn-scientist').classList.remove('active-persona');
             document.getElementById(`btn-${p}`).classList.add('active-persona');
             togglePersona();
+            appendMsg('ai', `Switched to ${p.toUpperCase()} mode. System Ready.`);
         }
 
         function handleFileSelect(input) {
@@ -161,42 +253,34 @@
             }
         }
 
-        // --- AUDIO ---
         async function playVoice(text) {
             if(text.includes('![')) return;
             try {
+                // Remove existing audio if playing
                 const existing = document.getElementById('active-audio');
                 if(existing) existing.pause();
+
                 const res = await fetch('/api/tts', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ text: text }) });
                 const blob = await res.blob();
                 const audio = new Audio(URL.createObjectURL(blob));
                 audio.id = 'active-audio';
+                audio.crossOrigin = "anonymous"; 
+                setupAudio(audio);
                 audio.play();
             } catch(e) {}
         }
 
-        function toggleMic() {
-            if (!('webkitSpeechRecognition' in window)) return alert("Use Chrome for voice.");
-            const recognition = new webkitSpeechRecognition();
-            const micBtn = document.getElementById('mic-btn');
-            recognition.lang = 'en-US';
-            recognition.onstart = () => micBtn.classList.add('mic-active');
-            recognition.onend = () => micBtn.classList.remove('mic-active');
-            recognition.onresult = (e) => {
-                document.getElementById('inp').value = e.results[0][0].transcript;
-                send();
-            };
-            recognition.start();
-        }
-
+        // --- 5. SEND LOGIC (TEXT + VISION) ---
         async function send() {
             const inp = document.getElementById('inp'); 
             const txt = inp.value.trim();
+            
             if(!txt && !selectedFile) return;
 
             document.getElementById('welcome').style.display = 'none';
             inp.value = '';
             
+            // UI Update
             if (selectedFile) {
                 const reader = new FileReader();
                 reader.onload = (e) => appendMsg('user', `<img src="${e.target.result}" style="max-width:100px; display:inline-block"><br>${txt}`);
@@ -206,11 +290,13 @@
                 appendMsg('user', txt);
             }
             
+            // --- VISION REQUEST ---
             if (selectedFile) {
                 const formData = new FormData();
                 formData.append('file', selectedFile);
                 formData.append('prompt', txt || "Analyze this image.");
                 selectedFile = null; 
+                
                 try {
                     const res = await fetch('/api/vision', { method: 'POST', body: formData });
                     const data = await res.json();
@@ -219,6 +305,7 @@
                 return;
             }
 
+            // --- TEXT REQUEST ---
             try {
                 const res = await fetch('/api/chat', { 
                     method: 'POST', 
@@ -232,25 +319,46 @@
 
         function finishResponse(text) {
             appendMsg('ai', text);
+            // NOTE: Auto-play removed. Audio is triggered via icon click in appendMsg
             if(!text.includes('![')) history.push({"role": "assistant", "content": text});
         }
 
+        // --- 6. SCROLL & ANIMATION ---
         function appendMsg(role, text) {
             const div = document.createElement('div');
             const isUser = role === 'user';
             div.className = `flex ${isUser ? 'justify-end' : 'justify-start'} mb-4`;
             
             let contentHtml = marked.parse(text);
+            
+            // Add Speaker Icon if AI
             if(role === 'ai' && !text.includes('![')) {
+                // Escape quotes for safe function call
                 const safeText = text.replace(/"/g, "&quot;").replace(/'/g, "\\'");
-                contentHtml += `<div class="mt-2"><button onclick="playVoice('${safeText}')" class="speaker-icon"><i class="fas fa-volume-up"></i></button></div>`;
+                contentHtml += `<div class="mt-2"><button onclick="playVoice('${safeText}')" class="speaker-icon" title="Read Aloud"><i class="fas fa-volume-up"></i></button></div>`;
             }
 
-            div.innerHTML = `<div class="p-4 ${isUser ? 'msg-user' : 'msg-ai'} leading-relaxed">${contentHtml}</div>`;
+            div.innerHTML = `<div class="p-4 ${isUser ? 'msg-user' : 'msg-ai'} leading-relaxed">
+                ${contentHtml}
+            </div>`;
+            
+            const img = div.querySelector('img');
+            if(img && role === 'ai') img.classList.add('img-scan');
+
             document.getElementById('chatFeed').appendChild(div);
-            div.scrollIntoView({ behavior: 'smooth' });
+            
+            requestAnimationFrame(() => {
+                const feed = document.getElementById('chatFeed');
+                feed.scrollTop = feed.scrollHeight;
+            });
         }
-        
+
+        const observer = new MutationObserver(() => {
+            const feed = document.getElementById('chatFeed');
+            feed.scrollTop = feed.scrollHeight;
+        });
+        observer.observe(document.getElementById('chatFeed'), { childList: true, subtree: true });
+
         document.getElementById('inp').addEventListener('keydown', (e) => { if(e.key==='Enter' && !e.shiftKey) { e.preventDefault(); send(); } });
     </script>
 </body>
