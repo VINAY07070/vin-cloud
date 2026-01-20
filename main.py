@@ -94,16 +94,27 @@ async def os_interface(request: Request):
 @app.get("/vinay-secret-logs", response_class=HTMLResponse)
 async def view_dashboard(request: Request):
     if request.session.get("user") != "Vinay": return HTMLResponse("<h1>403 FORBIDDEN</h1>")
-    logs_html = ""
+    
+    # Calculate stats
+    logs = []
+    user_stats = {}
     try:
         log_path = os.path.join(tempfile.gettempdir(), "vin_secret_logs.txt")
         if os.path.exists(log_path):
             with open(log_path, "r", encoding="utf-8") as f:
                 for line in reversed(f.readlines()):
                     p = line.strip().split("|||")
-                    if len(p) == 4: logs_html += f"<div style='border-left:2px solid #0f0; padding:5px; margin:10px; background:#001100; color:#0f0'><b>{p[0]} | {p[1]}</b><br>> {p[2]}<br>AI: {p[3]}</div>"
+                    if len(p) == 4:
+                        logs.append({"time": p[0], "user": p[1], "input": p[2], "output": p[3]})
+                        user_stats[p[1]] = user_stats.get(p[1], 0) + 1
     except: pass
-    return HTMLResponse(f"<body style='background:black; font-family:monospace'><h1>LOGS</h1>{logs_html}</body>")
+    
+    return templates.TemplateResponse("admin.html", {
+        "request": request, 
+        "logs": logs, 
+        "total": len(logs), 
+        "user_stats": user_stats
+    })
 
 # --- TEXT CHAT & IMAGE GENERATION ---
 @app.post("/api/chat")
@@ -113,7 +124,7 @@ async def chat(request: Request):
     
     data = await request.json()
     msg = data.get("message", "")
-    mode = data.get("mode", "roaster") # Default to roaster
+    mode = data.get("mode", "roaster")
     history = data.get("history", [])
 
     # 1. IMAGE GENERATION CHECK
@@ -130,7 +141,6 @@ async def chat(request: Request):
         final_prompt = f"{img_prompt}, raw photo, realistic, high detail, 8k, uncensored"
         encoded_prompt = urllib.parse.quote(final_prompt)
         seed = random.randint(1, 100000)
-        # Using Pollinations with enhancements
         image_url = f"https://image.pollinations.ai/prompt/{encoded_prompt}?nologo=true&private=true&model=flux&seed={seed}&enhance=false"
         resp = f"![{img_prompt}]({image_url})"
         log_secretly(user, msg, resp)
@@ -154,22 +164,20 @@ async def chat(request: Request):
     except Exception as e:
         return JSONResponse({"response": f"Error: {str(e)}"})
 
-# --- VISION API (NEW) ---
+# --- VISION API ---
 @app.post("/api/vision")
 async def vision_analysis(request: Request, file: UploadFile = File(...), prompt: str = Form(...)):
     user = request.session.get("user")
     if not user: return JSONResponse({"error": "Unauthorized"}, 401)
 
     try:
-        # Read image and encode to base64
         image_data = await file.read()
         base64_image = base64.b64encode(image_data).decode('utf-8')
         
         client = get_client()
         
-        # FIXED: Using the currently supported Llama 4 Scout Vision Model
         completion = await client.chat.completions.create(
-            model="meta-llama/llama-4-scout-17b-16e-instruct", # Updated Model ID
+            model="llama-3.2-90b-vision-preview", # Fallback to reliable model
             messages=[
                 {
                     "role": "user",
