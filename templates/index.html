@@ -23,7 +23,15 @@
         .anim-input { animation: slideUp 0.8s 0.3s forwards; transform: translateY(100%); opacity: 0; }
         @keyframes slideDown { to { transform: translateY(0); opacity: 1; } } @keyframes slideUp { to { transform: translateY(0); opacity: 1; } } @keyframes fadeIn { to { opacity: 1; } }
 
-        /* LOADING ANIMATION (Holographic Dots) */
+        /* IMAGE RENDERING ANIMATION */
+        @keyframes renderImage {
+            0% { filter: blur(20px) brightness(0); opacity: 0; transform: scale(0.95); }
+            50% { filter: blur(10px) brightness(0.5); opacity: 0.7; }
+            100% { filter: blur(0px) brightness(1); opacity: 1; transform: scale(1); }
+        }
+        .img-rendering { animation: renderImage 1.5s ease-out forwards; }
+
+        /* LOADING DOTS */
         .loader { display: flex; gap: 4px; padding: 10px; background: rgba(255,255,255,0.05); border-radius: 12px; width: fit-content; margin-bottom: 10px; border: 1px solid rgba(255,255,255,0.1); }
         .dot { width: 8px; height: 8px; background: var(--accent); border-radius: 50%; animation: bounce 1.4s infinite ease-in-out both; }
         .dot:nth-child(1) { animation-delay: -0.32s; }
@@ -42,7 +50,11 @@
         .msg-user { background: var(--accent); color: #fff; border-radius: 18px 18px 4px 18px; }
         .msg-ai { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); border-radius: 18px 18px 18px 4px; color: var(--text); }
         [data-theme="light"] .msg-ai { background: #fff; border-color: #eee; color: #333; }
-        .msg-ai img, .msg-user img { max-width: 100%; height: auto; border-radius: 12px; margin-top: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        
+        .msg-ai img, .msg-user img { 
+            max-width: 100%; height: auto; border-radius: 12px; margin-top: 10px; 
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1);
+        }
 
         .action-btn { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: var(--text); padding: 8px 16px; border-radius: 99px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; transition: 0.2s; display: flex; align-items: center; gap: 6px; }
         [data-theme="light"] .action-btn { background: #fff; border-color: #eee; color: #555; }
@@ -123,18 +135,18 @@
         }
 
         let history = [];
-        try { const saved = localStorage.getItem('vin_v15_final'); if(saved) { history = JSON.parse(saved); if(history.length) { document.getElementById('welcome').style.display='none'; history.forEach(m=>appendMsg(m.role,m.content,false)); } } } catch(e){}
+        try { const saved = localStorage.getItem('vin_v16_anim'); if(saved) { history = JSON.parse(saved); if(history.length) { document.getElementById('welcome').style.display='none'; history.forEach(m=>appendMsg(m.role,m.content,false)); } } } catch(e){}
         function toggleMenu() { document.getElementById('settingsMenu').classList.toggle('hidden-menu'); }
         function setTheme(t) { document.body.setAttribute('data-theme', t); play('click'); toggleMenu(); }
-        function clearHist() { if(confirm("Clear memory?")) { localStorage.removeItem('vin_v15_final'); location.reload(); } }
-        function saveHist(r, c) { history.push({role:r, content:c}); localStorage.setItem('vin_v15_final', JSON.stringify(history)); }
+        function clearHist() { if(confirm("Clear memory?")) { localStorage.removeItem('vin_v16_anim'); location.reload(); } }
+        function saveHist(r, c) { history.push({role:r, content:c}); localStorage.setItem('vin_v16_anim', JSON.stringify(history)); }
 
         async function send(autoVoice = false) {
             const inp = document.getElementById('inp'); const txt = inp.value.trim(); if(!txt) return;
             play('send'); document.getElementById('welcome').style.display='none'; inp.value=''; inp.style.height='auto';
             appendMsg('user', txt); saveHist('user', txt);
             
-            // SHOW LOADING ANIMATION
+            // SHOW LOADER
             const loader = document.createElement('div');
             loader.className = 'flex justify-start mb-4 loader-box';
             loader.innerHTML = `<div class="loader"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>`;
@@ -147,24 +159,40 @@
                 const res = await fetch('/api/chat', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ message: txt, history: history.slice(0, -1) }) });
                 const data = await res.json();
                 
-                // REMOVE LOADER
-                loader.remove();
+                loader.remove(); // Remove loader
                 
-                setTimeout(() => { play('rec'); appendMsg('ai', data.response); saveHist('assistant', data.response); if(autoVoice) playVoice(data.response); else document.getElementById('aiSpeaking').classList.add('opacity-0'); }, 100);
+                setTimeout(() => { 
+                    play('rec'); 
+                    appendMsg('ai', data.response); 
+                    saveHist('assistant', data.response); 
+                    if(autoVoice) playVoice(data.response); 
+                    else document.getElementById('aiSpeaking').classList.add('opacity-0'); 
+                }, 100);
             } catch(e) { loader.remove(); appendMsg('ai', "SYSTEM ERROR."); document.getElementById('aiSpeaking').classList.add('opacity-0'); }
         }
 
         function appendMsg(role, text, animate=true) {
             const div = document.createElement('div'); const isUser = role==='user';
             div.className = `flex ${isUser?'justify-end':'justify-start'} mb-4`;
+            
             const isImage = text.includes('![');
             const iconColor = document.body.getAttribute('data-theme') === 'light' ? 'text-black/30 hover:text-black' : 'text-white/30 hover:text-white';
             const speakerBtn = (!isUser && !isImage) ? `<button onclick="playVoice(this.parentNode.innerText); play('click')" class="absolute -right-8 top-2 ${iconColor} transition"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"></path></svg></button>` : '';
+
             div.innerHTML = `<div class="flex flex-col ${isUser?'items-end':'items-start'} max-w-[85%] relative group ${animate?'msg-enter':''}"><div class="p-4 text-[15px] leading-relaxed ${isUser?'msg-user':'msg-ai'}">${marked.parse(text)}</div>${speakerBtn}</div>`;
-            document.getElementById('chatFeed').appendChild(div); window.scrollTo(0, document.body.scrollHeight);
+            
+            // APPLY RENDERING ANIMATION TO IMAGES
+            if (isImage && animate) {
+                const img = div.querySelector('img');
+                if (img) img.classList.add('img-rendering');
+            }
+
+            document.getElementById('chatFeed').appendChild(div);
+            window.scrollTo(0, document.body.scrollHeight);
         }
 
         document.getElementById('inp').addEventListener('keydown', (e) => { if(e.key==='Enter' && !e.shiftKey) { e.preventDefault(); send(); } });
+        document.getElementById('inp').addEventListener('input', function() { this.style.height='auto'; this.style.height=(this.scrollHeight)+'px'; });
     </script>
 </body>
 </html>
