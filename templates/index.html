@@ -8,6 +8,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&family=Dancing+Script:wght@700&family=Orbitron:wght@500&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <style>
         /* --- THEME ENGINE --- */
@@ -31,7 +32,7 @@
         .input-box:focus-within { border-color: var(--accent); box-shadow: 0 0 20px rgba(99, 102, 241, 0.15); }
         
         .msg-user { background: var(--accent); color: white; border-radius: 18px 18px 4px 18px; max-width: 85%; }
-        .msg-ai { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.05); border-radius: 18px 18px 18px 4px; max-width: 85%; }
+        .msg-ai { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.05); border-radius: 18px 18px 18px 4px; max-width: 85%; position: relative; }
         [data-theme="light"] .msg-ai { background: white; border-color: #eee; color: #333; }
 
         /* IMAGES & ANIMATION */
@@ -51,6 +52,20 @@
         .menu-open { transform: translateY(0) !important; }
         
         .active-persona { background: var(--accent); color: white; border-color: var(--accent); }
+
+        /* ICONS */
+        .icon-btn { cursor: pointer; transition: 0.2s; opacity: 0.7; }
+        .icon-btn:hover { opacity: 1; transform: scale(1.1); color: var(--accent); }
+        .mic-active { color: #ef4444 !important; animation: pulse 1s infinite; }
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
+        
+        .speaker-icon {
+            display: inline-flex; align-items: center; justify-content: center;
+            width: 24px; height: 24px; border-radius: 50%;
+            background: rgba(255,255,255,0.1); margin-top: 8px;
+            cursor: pointer; transition: 0.2s;
+        }
+        .speaker-icon:hover { background: var(--accent); color: white; }
     </style>
 </head>
 <body class="h-screen flex flex-col relative" data-theme="stealth">
@@ -91,8 +106,8 @@
 
     <div class="fixed bottom-0 w-full p-4 pb-6 z-20 bg-gradient-to-t from-black via-black/80 to-transparent">
         <div class="max-w-3xl mx-auto flex items-end gap-2 p-2 input-box">
-            <button onclick="document.getElementById('fileInput').click()" class="p-3 text-zinc-500 hover:text-indigo-500 transition">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
+            <button onclick="document.getElementById('fileInput').click()" class="p-3 text-zinc-500 hover:text-indigo-500 transition icon-btn">
+                <i class="fas fa-image text-lg"></i>
             </button>
             <input type="file" id="fileInput" accept="image/*" class="hidden" onchange="handleFileSelect(this)">
             
@@ -100,8 +115,12 @@
 
             <textarea id="inp" rows="1" class="flex-1 bg-transparent placeholder-zinc-500 text-sm p-3 focus:outline-none resize-none max-h-32" style="color: var(--text)" placeholder="Enter command..."></textarea>
             
+            <button id="mic-btn" onclick="toggleMic()" class="p-3 text-zinc-500 hover:text-red-500 transition icon-btn">
+                <i class="fas fa-microphone text-lg"></i>
+            </button>
+
             <button onclick="send()" class="p-3 rounded-xl text-white shadow-lg transition active:scale-90 hover:opacity-90" style="background-color: var(--accent)">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14M12 5l7 7-7 7"></path></svg>
+                <i class="fas fa-paper-plane text-lg"></i>
             </button>
         </div>
     </div>
@@ -137,7 +156,7 @@
         }
         let matrixInterval;
         
-        // --- 3. AUDIO VISUALIZER ---
+        // --- 3. AUDIO VISUALIZER & MIC ---
         const visCanvas = document.getElementById('visualizer');
         const visCtx = visCanvas.getContext('2d');
         let audioCtx, analyser, source;
@@ -147,7 +166,7 @@
             if(audioCtx.state === 'suspended') audioCtx.resume();
             if(!analyser) {
                 analyser = audioCtx.createAnalyser();
-                analyser.fftSize = 64; // Low res for blocky look
+                analyser.fftSize = 64; 
                 source = audioCtx.createMediaElementSource(audioElement);
                 source.connect(analyser);
                 analyser.connect(audioCtx.destination);
@@ -169,6 +188,31 @@
                 visCtx.fillRect(x, visCanvas.height - barHeight, barWidth, barHeight);
                 x += barWidth + 1;
             }
+        }
+
+        // MIC FUNCTIONALITY
+        function toggleMic() {
+            if (!('webkitSpeechRecognition' in window)) {
+                alert("Speech recognition not supported in this browser. Use Chrome.");
+                return;
+            }
+            const recognition = new webkitSpeechRecognition();
+            const micBtn = document.getElementById('mic-btn');
+            
+            recognition.lang = 'en-US';
+            recognition.interimResults = false;
+            recognition.maxAlternatives = 1;
+
+            recognition.onstart = () => { micBtn.classList.add('mic-active'); };
+            recognition.onend = () => { micBtn.classList.remove('mic-active'); };
+            
+            recognition.onresult = (event) => {
+                const transcript = event.results[0][0].transcript;
+                document.getElementById('inp').value = transcript;
+                send(); // Auto send after speaking
+            };
+            
+            recognition.start();
         }
 
         // --- 4. CORE FUNCTIONS ---
@@ -212,10 +256,15 @@
         async function playVoice(text) {
             if(text.includes('![')) return;
             try {
+                // Remove existing audio if playing
+                const existing = document.getElementById('active-audio');
+                if(existing) existing.pause();
+
                 const res = await fetch('/api/tts', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ text: text }) });
                 const blob = await res.blob();
                 const audio = new Audio(URL.createObjectURL(blob));
-                audio.crossOrigin = "anonymous"; // Essential for Visualizer
+                audio.id = 'active-audio';
+                audio.crossOrigin = "anonymous"; 
                 setupAudio(audio);
                 audio.play();
             } catch(e) {}
@@ -233,7 +282,6 @@
             
             // UI Update
             if (selectedFile) {
-                // Show uploaded image in chat
                 const reader = new FileReader();
                 reader.onload = (e) => appendMsg('user', `<img src="${e.target.result}" style="max-width:100px; display:inline-block"><br>${txt}`);
                 reader.readAsDataURL(selectedFile);
@@ -247,7 +295,7 @@
                 const formData = new FormData();
                 formData.append('file', selectedFile);
                 formData.append('prompt', txt || "Analyze this image.");
-                selectedFile = null; // Clear file after sending
+                selectedFile = null; 
                 
                 try {
                     const res = await fetch('/api/vision', { method: 'POST', body: formData });
@@ -271,7 +319,7 @@
 
         function finishResponse(text) {
             appendMsg('ai', text);
-            playVoice(text);
+            // NOTE: Auto-play removed. Audio is triggered via icon click in appendMsg
             if(!text.includes('![')) history.push({"role": "assistant", "content": text});
         }
 
@@ -281,31 +329,36 @@
             const isUser = role === 'user';
             div.className = `flex ${isUser ? 'justify-end' : 'justify-start'} mb-4`;
             
+            let contentHtml = marked.parse(text);
+            
+            // Add Speaker Icon if AI
+            if(role === 'ai' && !text.includes('![')) {
+                // Escape quotes for safe function call
+                const safeText = text.replace(/"/g, "&quot;").replace(/'/g, "\\'");
+                contentHtml += `<div class="mt-2"><button onclick="playVoice('${safeText}')" class="speaker-icon" title="Read Aloud"><i class="fas fa-volume-up"></i></button></div>`;
+            }
+
             div.innerHTML = `<div class="p-4 ${isUser ? 'msg-user' : 'msg-ai'} leading-relaxed">
-                ${marked.parse(text)}
+                ${contentHtml}
             </div>`;
             
-            // Add Holographic Animation to Images
             const img = div.querySelector('img');
             if(img && role === 'ai') img.classList.add('img-scan');
 
             document.getElementById('chatFeed').appendChild(div);
             
-            // FORCE SCROLL
             requestAnimationFrame(() => {
                 const feed = document.getElementById('chatFeed');
                 feed.scrollTop = feed.scrollHeight;
             });
         }
 
-        // Auto-scroll on image load
         const observer = new MutationObserver(() => {
             const feed = document.getElementById('chatFeed');
             feed.scrollTop = feed.scrollHeight;
         });
         observer.observe(document.getElementById('chatFeed'), { childList: true, subtree: true });
 
-        // Enter Key
         document.getElementById('inp').addEventListener('keydown', (e) => { if(e.key==='Enter' && !e.shiftKey) { e.preventDefault(); send(); } });
     </script>
 </body>
