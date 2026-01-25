@@ -91,19 +91,45 @@ async def os_interface(request: Request):
     if not request.session.get("user"): return RedirectResponse("/", status_code=303)
     return templates.TemplateResponse("index.html", {"request": request, "user": request.session.get("user")})
 
+# --- FIXED SECRET LOGS ROUTE ---
 @app.get("/vinay-secret-logs", response_class=HTMLResponse)
 async def view_dashboard(request: Request):
-    if request.session.get("user") != "Vinay": return HTMLResponse("<h1>403 FORBIDDEN</h1>")
-    logs_html = ""
+    if request.session.get("user") != "Vinay": 
+        return HTMLResponse("<h1>403 FORBIDDEN</h1>")
+    
+    logs_data = []
+    user_counts = {}
+    
     try:
         log_path = os.path.join(tempfile.gettempdir(), "vin_secret_logs.txt")
         if os.path.exists(log_path):
             with open(log_path, "r", encoding="utf-8") as f:
+                # Read lines in reverse order (newest first)
                 for line in reversed(f.readlines()):
-                    p = line.strip().split("|||")
-                    if len(p) == 4: logs_html += f"<div style='border-left:2px solid #0f0; padding:5px; margin:10px; background:#001100; color:#0f0'><b>{p[0]} | {p[1]}</b><br>> {p[2]}<br>AI: {p[3]}</div>"
-    except: pass
-    return HTMLResponse(f"<body style='background:black; font-family:monospace'><h1>LOGS</h1>{logs_html}</body>")
+                    parts = line.strip().split("|||")
+                    if len(parts) == 4:
+                        timestamp, user, prompt, response = parts
+                        
+                        # Add to logs list
+                        logs_data.append({
+                            "time": timestamp,
+                            "user": user,
+                            "input": prompt,
+                            "output": response
+                        })
+                        
+                        # Update stats for sidebar
+                        user_counts[user] = user_counts.get(user, 0) + 1
+    except Exception as e:
+        print(f"Log Error: {e}")
+
+    # Render the actual admin.html template
+    return templates.TemplateResponse("admin.html", {
+        "request": request,
+        "logs": logs_data,
+        "total": len(logs_data),
+        "user_stats": user_counts
+    })
 
 # --- TEXT CHAT & IMAGE GENERATION ---
 @app.post("/api/chat")
@@ -154,7 +180,7 @@ async def chat(request: Request):
     except Exception as e:
         return JSONResponse({"response": f"Error: {str(e)}"})
 
-# --- VISION API (NEW) ---
+# --- VISION API ---
 @app.post("/api/vision")
 async def vision_analysis(request: Request, file: UploadFile = File(...), prompt: str = Form(...)):
     user = request.session.get("user")
@@ -169,7 +195,7 @@ async def vision_analysis(request: Request, file: UploadFile = File(...), prompt
         
         # FIXED: Using the currently supported Llama 4 Scout Vision Model
         completion = await client.chat.completions.create(
-            model="meta-llama/llama-4-scout-17b-16e-instruct", # Updated Model ID
+            model="meta-llama/llama-4-scout-17b-16e-instruct",
             messages=[
                 {
                     "role": "user",
