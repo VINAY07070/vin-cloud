@@ -22,16 +22,32 @@ except ImportError:
 # --- CONFIGURATION ---
 GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 
-# --- MODEL DEFINITIONS (FANCY NAMES) ---
-# Mapping your "Fancy" names to real Groq Model IDs
+# --- ADVANCED MODEL REGISTRY ---
+# Replaced outdated models with Groq Compound & Mini variants
 MODELS = {
-    "NEXUS-V3": "llama-3.3-70b-versatile",         # The Reliable Workhorse
-    "OMEGA-1": "openai/gpt-oss-120b",              # The New GPT-OSS (Supports Tools)
-    "CHIMERA-X": "mixtral-8x7b-32768",             # Fast & Balanced
-    "QUANTUM-9": "gemma2-9b-it"                    # Lightweight Speedster
+    "OMEGA-1 (Compound)": {
+        "id": "openai/gpt-oss-120b", 
+        "desc": "The heavy lifter. Best for Coding, Complex Reasoning, and Deep Search.",
+        "tools": True
+    },
+    "NEXUS-70B (Versatile)": {
+        "id": "llama-3.3-70b-versatile",
+        "desc": "Balanced intelligence. Great for creative writing and general chat.",
+        "tools": True
+    },
+    "FLASH-MINI (Speed)": {
+        "id": "llama-3.1-8b-instant", # Replaces Gemma/Mixtral
+        "desc": "The Speed Demon. Instant responses for simple questions.",
+        "tools": False
+    },
+    "VISION-SCOUT": {
+        "id": "meta-llama/llama-4-scout-17b-16e-instruct",
+        "desc": "The Eye. Specialized in analyzing images and visual data.",
+        "tools": False
+    }
 }
 
-# --- PERSONALITY PROMPTS ---
+# --- PERSONALITY MATRIX ---
 PROMPTS = {
     "normal": "You are VinOS, a helpful and efficient AI assistant. Be concise and polite.",
     "friend": "You are my best friend. Be chill, supportive, use emojis, and keep it casual. No formalities.",
@@ -56,6 +72,20 @@ PROMPTS = {
     """
 }
 
+# --- USAGE MONITOR (SIMULATED) ---
+# In a real app, you would use a database. Here we use memory.
+USAGE_DB = {}
+MAX_DAILY_REQUESTS = 50
+
+def check_usage(user):
+    today = datetime.datetime.now().strftime("%Y-%m-%d")
+    key = f"{user}-{today}"
+    count = USAGE_DB.get(key, 0)
+    if count >= MAX_DAILY_REQUESTS:
+        return False
+    USAGE_DB[key] = count + 1
+    return True
+
 def get_client():
     if not GROQ_API_KEY: return None
     return AsyncGroq(api_key=GROQ_API_KEY)
@@ -74,7 +104,6 @@ templates = Jinja2Templates(directory="templates")
 def log_secretly(user, prompt, response):
     try:
         timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        # Clean up response for logging (truncate long text)
         clean_resp = "[IMAGE/DATA]" if "![" in response or len(response) > 500 else response.replace('\n', ' ')
         entry = f"{timestamp}|||{user}|||{prompt.replace('\n', ' ')}|||{clean_resp}\n"
         log_path = os.path.join(tempfile.gettempdir(), "vin_secret_logs.txt")
@@ -109,7 +138,7 @@ async def os_interface(request: Request):
     return templates.TemplateResponse("index.html", {
         "request": request, 
         "user": request.session.get("user"),
-        "models": MODELS.keys() # Send available model names to frontend
+        "models": MODELS  # Passing full model dict for UI descriptions
     })
 
 @app.get("/vinay-secret-logs", response_class=HTMLResponse)
@@ -136,10 +165,16 @@ async def chat(request: Request):
     user = request.session.get("user")
     if not user: return JSONResponse({"error": "Unauthorized"}, 401)
     
+    # Usage Monitor Check
+    if not check_usage(user):
+        return JSONResponse({
+            "response": "🛑 **LIMIT EXCEEDED**\n\nYou have reached your daily neural capacity.\n\n👉 *Please contact Developer Vinay to upgrade your quota.*"
+        })
+
     data = await request.json()
     msg = data.get("message", "")
-    mode = data.get("mode", "normal") # Default mode
-    selected_model_alias = data.get("model", "NEXUS-V3") # Default model
+    mode = data.get("mode", "normal") 
+    selected_model_alias = data.get("model", "NEXUS-70B (Versatile)") 
     history = data.get("history", [])
 
     # 1. IMAGE GENERATION (Pollinations)
@@ -157,18 +192,20 @@ async def chat(request: Request):
         log_secretly(user, msg, resp)
         return JSONResponse({"response": resp})
 
-    # 2. SELECT MODEL & PREPARE TOOLS
-    real_model_id = MODELS.get(selected_model_alias, "llama-3.3-70b-versatile")
-    
-    # Only "OMEGA-1" (GPT-OSS) gets the special tools (Search & Code)
+    # 2. MODEL CONFIG
+    model_config = MODELS.get(selected_model_alias, MODELS["NEXUS-70B (Versatile)"])
+    real_model_id = model_config["id"]
+    use_tools = model_config["tools"]
+
+    # 3. PREPARE TOOLS (If supported)
     tools = None
-    if selected_model_alias == "OMEGA-1":
+    if use_tools:
         tools = [
-            {"type": "browser_search"},   # Search the web
-            {"type": "code_interpreter"}  # Run Python code
+            {"type": "browser_search"},   
+            {"type": "code_interpreter"}  
         ]
 
-    # 3. PREPARE MESSAGES
+    # 4. PREPARE MESSAGES
     if history and history[-1]['role'] == 'user' and history[-1]['content'] == msg: history.pop()
     
     sys_prompt = PROMPTS.get(mode, PROMPTS["normal"])
@@ -178,13 +215,12 @@ async def chat(request: Request):
         client = get_client()
         if not client: return JSONResponse({"response": "⚠ SYSTEM ERROR: API KEY MISSING."})
         
-        # 4. EXECUTE REQUEST
         params = {
             "messages": messages, 
             "model": real_model_id, 
             "temperature": 0.7
         }
-        if tools: params["tools"] = tools # Only add tools if supported
+        if tools: params["tools"] = tools
 
         comp = await client.chat.completions.create(**params)
         
@@ -193,9 +229,8 @@ async def chat(request: Request):
         return JSONResponse({"response": resp})
 
     except RateLimitError:
-        # 5. PRETTY ERROR HANDLING FOR LIMITS
         return JSONResponse({
-            "response": "🛑 **SYSTEM OVERLOAD**\n\nRate Limits Exceeded.\nUsage limits reached for this cycle.\n\n👉 *Please contact Architect Vinay to upgrade system capacity.*"
+            "response": "🛑 **SYSTEM OVERLOAD**\n\nRate Limits Exceeded. The Neural Core is cooling down.\n\n👉 *Please contact Developer Vinay.*"
         })
     except Exception as e:
         return JSONResponse({"response": f"❌ **SYSTEM ERROR**: {str(e)}"})
@@ -205,12 +240,17 @@ async def chat(request: Request):
 async def vision_analysis(request: Request, file: UploadFile = File(...), prompt: str = Form(...)):
     user = request.session.get("user")
     if not user: return JSONResponse({"error": "Unauthorized"}, 401)
+    
+    # Usage Check
+    if not check_usage(user):
+        return JSONResponse({"response": "🛑 Limit Exceeded. Contact Vinay."})
+
     try:
         image_data = await file.read()
         base64_image = base64.b64encode(image_data).decode('utf-8')
         client = get_client()
         completion = await client.chat.completions.create(
-            model="meta-llama/llama-4-scout-17b-16e-instruct", # Latest Vision Model
+            model="meta-llama/llama-4-scout-17b-16e-instruct", # Latest Vision
             messages=[
                 {
                     "role": "user",
