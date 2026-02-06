@@ -16,13 +16,11 @@
             --bg-deep: #050508; 
             --glass-panel: rgba(15, 15, 20, 0.65); 
             --glass-border: rgba(255,255,255,0.08); 
-            --accent-primary: #8b5cf6; /* Violet */
-            --accent-secondary: #06b6d4; /* Cyan */
+            --accent-primary: #8b5cf6; 
             --text-main: #e2e8f0;
             --neon-glow: 0 0 15px rgba(139, 92, 246, 0.3);
         }
         
-        /* --- CORE LAYOUT --- */
         body { 
             background-color: var(--bg-deep);
             background-image: 
@@ -31,16 +29,14 @@
             background-attachment: fixed;
             color: var(--text-main); 
             font-family: 'Outfit', sans-serif; 
-            overflow: hidden; /* Prevent body scroll, handle inside containers */
+            overflow: hidden; 
         }
 
-        /* --- GLASSMORPHISM --- */
         .glass {
             background: var(--glass-panel);
             backdrop-filter: blur(16px);
             -webkit-backdrop-filter: blur(16px);
             border: 1px solid var(--glass-border);
-            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.3);
         }
 
         /* --- CHAT BUBBLES --- */
@@ -49,43 +45,32 @@
             color: white; 
             border-radius: 20px 20px 4px 20px; 
             box-shadow: var(--neon-glow);
-            border: 1px solid rgba(255,255,255,0.1);
         }
         .msg-ai { 
             background: rgba(255, 255, 255, 0.03); 
             border: 1px solid rgba(255, 255, 255, 0.08); 
             border-radius: 20px 20px 20px 4px; 
-            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
         }
         
-        /* Fix Image Sizing in Chat */
+        /* IMAGE FIXES: Forces images to be big and visible */
         .msg-ai img, .msg-user img {
-            max-width: 100%;
+            width: 100%;
+            max-width: 500px;
             height: auto;
             border-radius: 12px;
             margin-top: 10px;
             border: 1px solid rgba(255,255,255,0.1);
+            display: block;
         }
 
-        /* --- SCROLLBAR --- */
+        /* SCROLLBAR */
         ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
-        ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
 
-        /* --- ANIMATIONS --- */
+        /* ANIMATIONS */
         @keyframes slideIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         .anim-entry { animation: slideIn 0.3s ease-out forwards; }
         
-        .typing-dot {
-            width: 6px; height: 6px; background: #a78bfa; border-radius: 50%;
-            animation: bounce 1.4s infinite ease-in-out both;
-        }
-        .typing-dot:nth-child(1) { animation-delay: -0.32s; }
-        .typing-dot:nth-child(2) { animation-delay: -0.16s; }
-        @keyframes bounce { 0%, 80%, 100% { transform: scale(0); } 40% { transform: scale(1); } }
-
-        /* --- MOBILE SIDEBAR --- */
         .sidebar-closed { transform: translateX(-100%); }
         @media (min-width: 768px) { .sidebar-closed { transform: none; } }
     </style>
@@ -93,141 +78,84 @@
 <body class="h-screen flex flex-col md:flex-row relative text-sm md:text-base selection:bg-purple-500/30">
 
     <div id="sidebar" class="fixed inset-y-0 left-0 w-72 glass z-40 transition-transform duration-300 sidebar-closed md:relative md:transform-none flex flex-col">
-        
         <div class="p-6 border-b border-white/5 flex items-center gap-3">
-            <div class="w-10 h-10 rounded-xl bg-purple-500/10 flex items-center justify-center border border-purple-500/20 text-purple-400 shadow-[0_0_15px_rgba(168,85,247,0.15)]">
+            <div class="w-10 h-10 rounded-xl bg-purple-500/10 flex items-center justify-center border border-purple-500/20 text-purple-400">
                 <i class="fas fa-dna text-lg"></i>
             </div>
             <div>
-                <h1 class="font-bold font-['Rajdhani'] text-xl tracking-wider text-white">VinOS <span class="text-xs text-purple-400 align-top">V3</span></h1>
-                <div class="flex items-center gap-2">
-                    <span class="relative flex h-2 w-2">
-                      <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-                      <span class="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
-                    </span>
-                    <span class="text-[10px] text-gray-400 font-mono tracking-widest uppercase">System Online</span>
-                </div>
+                <h1 class="font-bold font-['Rajdhani'] text-xl tracking-wider text-white">VinOS <span class="text-xs text-purple-400">V3</span></h1>
+                <div class="text-[10px] text-green-400 font-mono tracking-widest uppercase">System Online</div>
             </div>
             <button onclick="toggleSidebar()" class="md:hidden ml-auto text-gray-400"><i class="fas fa-times"></i></button>
         </div>
 
-        <div class="flex-1 overflow-y-auto p-6 space-y-8">
-            
+        <div class="flex-1 overflow-y-auto p-6 space-y-6">
             <div>
-                <h3 class="text-[10px] text-gray-500 font-bold uppercase tracking-[0.2em] mb-3">Neural Core</h3>
-                <div class="p-4 rounded-2xl bg-gradient-to-br from-white/5 to-transparent border border-white/5 hover:border-purple-500/30 transition-colors group">
-                    <div class="flex justify-between items-start mb-2">
-                        <i class="fas fa-microchip text-purple-400 text-xl group-hover:text-purple-300 transition"></i>
-                        <span id="badge-tools" class="hidden px-2 py-0.5 rounded text-[9px] font-bold bg-blue-500/20 text-blue-300 border border-blue-500/20">TOOLS</span>
-                    </div>
-                    <div id="info-model-name" class="font-['Rajdhani'] font-bold text-lg text-white mb-1">...</div>
-                    <div id="info-model-desc" class="text-xs text-gray-400 leading-relaxed">Select a model to view capabilities.</div>
+                <h3 class="text-[10px] text-gray-500 font-bold uppercase tracking-[0.2em] mb-2">Neural Core</h3>
+                <div class="p-4 rounded-xl bg-white/5 border border-white/5">
+                    <div id="info-model-name" class="font-bold text-white mb-1">...</div>
+                    <div id="info-model-desc" class="text-xs text-gray-400">Loading...</div>
                 </div>
             </div>
 
             <div class="space-y-4">
-                <h3 class="text-[10px] text-gray-500 font-bold uppercase tracking-[0.2em]">Configuration</h3>
-                
-                <div class="space-y-1">
-                    <label class="text-xs text-gray-400 ml-1">Model Architecture</label>
-                    <div class="relative">
-                        <select id="model-select" onchange="updateModelInfo()" class="w-full appearance-none bg-black/20 border border-white/10 rounded-xl px-4 py-3 text-xs focus:outline-none focus:border-purple-500/50 focus:bg-white/5 transition text-gray-200">
-                            {% for name, details in models.items() %}
-                            <option value="{{name}}" data-desc="{{details.desc}}" data-tools="{{details.tools}}" class="bg-gray-900">{{name}}</option>
-                            {% endfor %}
-                        </select>
-                        <i class="fas fa-chevron-down absolute right-4 top-3.5 text-gray-500 text-xs pointer-events-none"></i>
-                    </div>
-                </div>
+                <label class="block text-xs text-gray-400">Model Architecture</label>
+                <select id="model-select" onchange="updateModelInfo()" class="w-full bg-black/40 border border-white/10 rounded-xl p-3 text-xs text-gray-200 outline-none focus:border-purple-500">
+                    {% for name, details in models.items() %}
+                    <option value="{{name}}" data-desc="{{details.desc}}" data-tools="{{details.tools}}">{{name}}</option>
+                    {% endfor %}
+                </select>
 
-                <div class="space-y-1">
-                    <label class="text-xs text-gray-400 ml-1">Persona Matrix</label>
-                    <div class="relative">
-                        <select id="mode-select" class="w-full appearance-none bg-black/20 border border-white/10 rounded-xl px-4 py-3 text-xs focus:outline-none focus:border-purple-500/50 focus:bg-white/5 transition text-gray-200">
-                            <option value="normal" class="bg-gray-900">🔵 Normal (Efficient)</option>
-                            <option value="friend" class="bg-gray-900">😎 Best Friend (Casual)</option>
-                            <option value="scientist" class="bg-gray-900">⚛️ Scientist (Academic)</option>
-                            <option value="roaster" class="bg-gray-900">💀 Roaster (Toxic)</option>
-                            <option value="uncensored" class="bg-gray-900">⛓️ Unchained (No Limits)</option>
-                        </select>
-                        <i class="fas fa-chevron-down absolute right-4 top-3.5 text-gray-500 text-xs pointer-events-none"></i>
-                    </div>
-                </div>
+                <label class="block text-xs text-gray-400">Persona Matrix</label>
+                <select id="mode-select" class="w-full bg-black/40 border border-white/10 rounded-xl p-3 text-xs text-gray-200 outline-none focus:border-purple-500">
+                    <option value="normal">🔵 Normal</option>
+                    <option value="friend">😎 Best Friend</option>
+                    <option value="scientist">⚛️ Scientist</option>
+                    <option value="roaster">💀 Roaster</option>
+                    <option value="uncensored">⛓️ Unchained</option>
+                </select>
             </div>
         </div>
 
         <div class="p-6 border-t border-white/5">
-            <button onclick="clearHistory()" class="w-full py-3 rounded-xl border border-red-500/20 text-red-400 hover:bg-red-500/10 hover:border-red-500/40 transition flex items-center justify-center gap-2 group">
-                <i class="fas fa-trash-alt group-hover:rotate-12 transition"></i>
-                <span class="text-xs font-bold uppercase tracking-wider">Wipe Memory</span>
-            </button>
+            <button onclick="clearHistory()" class="w-full py-3 rounded-xl border border-red-500/20 text-red-400 hover:bg-red-500/10 transition text-xs font-bold uppercase">Wipe Memory</button>
         </div>
     </div>
 
     <div class="flex-1 flex flex-col h-full relative z-0">
         
         <div class="md:hidden h-16 flex items-center justify-between px-4 absolute top-0 left-0 w-full z-30 glass border-b border-white/5">
-            <span class="font-bold font-['Rajdhani'] text-lg tracking-wider">VinOS</span>
-            <button onclick="toggleSidebar()" class="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center text-white/70 active:scale-95 transition">
-                <i class="fas fa-bars"></i>
-            </button>
+            <span class="font-bold font-['Rajdhani'] text-lg">VinOS</span>
+            <button onclick="toggleSidebar()" class="text-white/70"><i class="fas fa-bars"></i></button>
         </div>
 
         <div id="chatFeed" class="flex-1 overflow-y-auto px-4 pt-20 md:pt-8 pb-[180px] space-y-6 scroll-smooth">
-            
             <div id="welcome" class="h-full flex flex-col items-center justify-center opacity-40 select-none min-h-[50vh]">
-                <div class="relative">
-                    <div class="absolute inset-0 bg-purple-500 blur-2xl opacity-20 animate-pulse"></div>
-                    <div class="w-24 h-24 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center relative z-10 backdrop-blur-sm">
-                        <i class="fas fa-fingerprint text-4xl text-purple-400"></i>
-                    </div>
-                </div>
-                <h2 class="mt-6 text-3xl font-['Rajdhani'] font-bold tracking-widest text-white">SYSTEM READY</h2>
-                <p class="text-sm text-gray-500 font-mono mt-2">Waiting for input command...</p>
+                <h2 class="text-3xl font-['Rajdhani'] font-bold tracking-widest text-white">SYSTEM READY</h2>
+                <p class="text-sm text-gray-500 font-mono mt-2">Waiting for input...</p>
             </div>
-
         </div>
 
         <div class="absolute bottom-0 left-0 w-full p-4 md:p-6 z-50 pointer-events-none">
-            
             <div class="max-w-4xl mx-auto pointer-events-auto">
-                
-                <div class="flex justify-between items-center px-4 mb-2 opacity-0 transition-opacity duration-500" id="status-bar">
-                    <div class="text-[10px] font-mono text-purple-400 flex items-center gap-2">
-                        <span class="w-1.5 h-1.5 rounded-full bg-purple-500 animate-pulse"></span>
-                        <span id="status-text">LISTENING</span>
-                    </div>
-                </div>
-
-                <div class="glass rounded-2xl p-2 flex items-end gap-2 relative shadow-2xl ring-1 ring-white/10 bg-black/40">
+                <div class="glass rounded-2xl p-2 flex items-end gap-2 relative shadow-2xl bg-black/60">
                     
-                    <div id="previewContainer" class="hidden absolute -top-20 left-0 bg-black/80 p-2 rounded-xl border border-white/10 backdrop-blur-md shadow-lg anim-entry">
-                        <img id="visionPreview" class="h-14 w-14 rounded-lg object-cover border border-white/20">
-                        <button onclick="clearFile()" class="absolute -top-2 -right-2 bg-red-500 rounded-full w-5 h-5 flex items-center justify-center text-[10px] text-white hover:bg-red-400 transition shadow-lg">✕</button>
+                    <div id="previewContainer" class="hidden absolute -top-20 left-0 bg-black/80 p-2 rounded-xl border border-white/10 backdrop-blur-md shadow-lg">
+                        <img id="visionPreview" class="h-14 w-14 rounded-lg object-cover">
+                        <button onclick="clearFile()" class="absolute -top-2 -right-2 bg-red-500 rounded-full w-5 h-5 flex items-center justify-center text-[10px] text-white">✕</button>
                     </div>
 
-                    <button onclick="document.getElementById('fileInput').click()" class="p-3.5 text-gray-400 hover:text-white hover:bg-white/10 rounded-xl transition-all duration-200" title="Upload Image">
-                        <i class="fas fa-image text-lg"></i>
-                    </button>
+                    <button onclick="document.getElementById('fileInput').click()" class="p-3.5 text-gray-400 hover:text-white hover:bg-white/10 rounded-xl transition"><i class="fas fa-image text-lg"></i></button>
                     <input type="file" id="fileInput" accept="image/*" class="hidden" onchange="handleFileSelect(this)">
 
-                    <textarea id="inp" rows="1" class="flex-1 bg-transparent border-none focus:ring-0 text-white placeholder-gray-500/80 px-2 py-3.5 max-h-32 resize-none text-sm md:text-base leading-relaxed" placeholder="Ask anything..."></textarea>
+                    <textarea id="inp" rows="1" class="flex-1 bg-transparent border-none focus:ring-0 text-white placeholder-gray-500 px-2 py-3.5 max-h-32 resize-none" placeholder="Ask anything..."></textarea>
                     
-                    <button id="mic-btn" onclick="toggleMic()" class="p-3.5 text-gray-400 hover:text-red-400 hover:bg-white/10 rounded-xl transition-all duration-200">
-                        <i class="fas fa-microphone text-lg"></i>
-                    </button>
+                    <button id="mic-btn" onclick="toggleMic()" class="p-3.5 text-gray-400 hover:text-red-400 hover:bg-white/10 rounded-xl transition"><i class="fas fa-microphone text-lg"></i></button>
                     
-                    <button onclick="send()" class="p-3.5 bg-purple-600 hover:bg-purple-500 text-white rounded-xl shadow-lg shadow-purple-600/20 transition-all duration-200 active:scale-95 group">
-                        <i class="fas fa-paper-plane text-lg group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform"></i>
-                    </button>
-                </div>
-                
-                <div class="text-center mt-3">
-                    <span class="text-[10px] text-gray-600 font-mono">SECURE ENCRYPTED CONNECTION // VinOS</span>
+                    <button onclick="send()" class="p-3.5 bg-purple-600 hover:bg-purple-500 text-white rounded-xl shadow-lg transition active:scale-95"><i class="fas fa-paper-plane text-lg"></i></button>
                 </div>
             </div>
         </div>
-
     </div>
 
     <script>
@@ -235,30 +163,15 @@
         let selectedFile = null;
 
         window.onload = () => { updateModelInfo(); };
+        function toggleSidebar() { document.getElementById('sidebar').classList.toggle('sidebar-closed'); }
 
-        // Sidebar Toggle for Mobile
-        function toggleSidebar() {
-            document.getElementById('sidebar').classList.toggle('sidebar-closed');
-        }
-
-        // Update Model Info Card
         function updateModelInfo() {
             const select = document.getElementById('model-select');
             const opt = select.options[select.selectedIndex];
-            
             document.getElementById('info-model-name').innerText = opt.value;
             document.getElementById('info-model-desc').innerText = opt.getAttribute('data-desc');
-            
-            const hasTools = opt.getAttribute('data-tools') === "True";
-            const badge = document.getElementById('badge-tools');
-            if(hasTools) {
-                badge.classList.remove('hidden');
-            } else {
-                badge.classList.add('hidden');
-            }
         }
 
-        // File Handling
         function handleFileSelect(input) {
             if (input.files && input.files[0]) {
                 selectedFile = input.files[0];
@@ -277,19 +190,13 @@
             document.getElementById('previewContainer').classList.add('hidden');
         }
 
-        // Send Logic
         async function send() {
             const inp = document.getElementById('inp');
             const txt = inp.value.trim();
             if(!txt && !selectedFile) return;
 
-            // UI Cleanup
             document.getElementById('welcome')?.remove();
-            document.getElementById('status-bar').style.opacity = 1;
-            document.getElementById('status-text').innerText = "PROCESSING...";
-            document.getElementById('status-text').classList.add('text-purple-400');
-
-            // Render User Message
+            
             if(selectedFile) {
                 const reader = new FileReader();
                 reader.onload = (e) => appendMsg('user', `<img src="${e.target.result}" class="max-h-48 rounded-lg border border-white/10 mb-2 shadow-md"><br>${txt}`);
@@ -300,34 +207,25 @@
             }
             inp.value = '';
 
-            // Loading Indicator
             const loadId = 'load-' + Date.now();
             const feed = document.getElementById('chatFeed');
             const loader = document.createElement('div');
             loader.id = loadId;
-            loader.className = 'flex gap-1 items-center ml-4 mt-2 anim-entry';
-            loader.innerHTML = `
-                <div class="typing-dot"></div>
-                <div class="typing-dot"></div>
-                <div class="typing-dot"></div>
-            `;
+            loader.className = 'flex gap-1 items-center ml-4 mt-2 opacity-70 text-xs text-purple-400 font-mono';
+            loader.innerHTML = 'PROCESSING DATA...';
             feed.appendChild(loader);
-            scrollToBottom();
+            feed.scrollTop = feed.scrollHeight;
 
             try {
                 let data;
-                
-                // Vision API Call
                 if(selectedFile) {
                     const formData = new FormData();
                     formData.append('file', selectedFile);
-                    formData.append('prompt', txt || "Analyze this image");
+                    formData.append('prompt', txt || "Analyze this");
                     selectedFile = null;
                     const res = await fetch('/api/vision', { method: 'POST', body: formData });
                     data = await res.json();
-                } 
-                // Chat API Call
-                else {
+                } else {
                     const res = await fetch('/api/chat', { 
                         method: 'POST', 
                         headers: {'Content-Type': 'application/json'}, 
@@ -342,79 +240,46 @@
                 }
 
                 document.getElementById(loadId).remove();
-                
-                const response = data.response || "System Error.";
+                const response = data.response || "Error.";
                 appendMsg('ai', response);
                 
-                // Only add to history if not an error or image
                 if(!response.includes('SYSTEM OVERLOAD') && !response.includes('![')) {
                     history.push({"role": "assistant", "content": response});
                 }
-                
-                document.getElementById('status-text').innerText = "ONLINE";
-
             } catch(e) {
                 document.getElementById(loadId).remove();
-                appendMsg('ai', "❌ **CONNECTION FAILURE**\nUnable to reach Neural Core.");
-                document.getElementById('status-text').innerText = "OFFLINE";
+                appendMsg('ai', "❌ CONNECTION LOST");
             }
         }
 
-        // Helper: Append Message
         function appendMsg(role, text) {
             const div = document.createElement('div');
             div.className = `flex ${role === 'user' ? 'justify-end' : 'justify-start'} anim-entry`;
             
             let html = marked.parse(text);
-            
-            // Highlight error messages
-            if (text.includes('❌') || text.includes('🛑')) {
-                div.innerHTML = `<div class="p-4 max-w-[85%] border border-red-500/30 bg-red-500/10 text-red-200 rounded-2xl shadow-lg backdrop-blur-md">${html}</div>`;
-            } else {
-                div.innerHTML = `<div class="p-4 md:p-5 max-w-[85%] ${role === 'user' ? 'msg-user' : 'msg-ai'} text-sm md:text-base leading-relaxed shadow-lg backdrop-blur-md overflow-hidden">${html}</div>`;
-            }
+            div.innerHTML = `<div class="p-4 md:p-5 max-w-[85%] ${role === 'user' ? 'msg-user' : 'msg-ai'} text-sm md:text-base leading-relaxed shadow-lg overflow-hidden break-words">${html}</div>`;
             
             const feed = document.getElementById('chatFeed');
             feed.appendChild(div);
-            scrollToBottom();
-        }
-
-        function scrollToBottom() {
-            const feed = document.getElementById('chatFeed');
             feed.scrollTop = feed.scrollHeight;
         }
 
         function clearHistory() {
             history = [];
-            const feed = document.getElementById('chatFeed');
-            feed.innerHTML = `
-                <div class="h-full flex flex-col items-center justify-center opacity-40 select-none min-h-[50vh] anim-entry">
-                    <h2 class="text-xl font-mono text-red-400 border border-red-500/30 px-4 py-2 rounded-lg bg-red-500/5">MEMORY FORMATTED</h2>
-                </div>`;
+            document.getElementById('chatFeed').innerHTML = '<div class="h-full flex flex-col items-center justify-center opacity-40 select-none min-h-[50vh]"><h2 class="text-xl font-mono text-red-400">MEMORY FORMATTED</h2></div>';
         }
 
-        // Voice
         function toggleMic() {
             if (!('webkitSpeechRecognition' in window)) return alert("Voice unavailable.");
             const r = new webkitSpeechRecognition();
             const btn = document.getElementById('mic-btn');
             r.lang = 'en-US';
-            r.onstart = () => {
-                btn.classList.add('text-red-500', 'bg-red-500/10');
-                document.getElementById('status-text').innerText = "RECORDING...";
-            };
-            r.onend = () => {
-                btn.classList.remove('text-red-500', 'bg-red-500/10');
-                document.getElementById('status-text').innerText = "PROCESSING...";
-            };
-            r.onresult = (e) => { 
-                document.getElementById('inp').value = e.results[0][0].transcript; 
-                send(); 
-            };
+            r.onstart = () => btn.classList.add('text-red-500');
+            r.onend = () => btn.classList.remove('text-red-500');
+            r.onresult = (e) => { document.getElementById('inp').value = e.results[0][0].transcript; send(); };
             r.start();
         }
 
-        // Enter Key
         document.getElementById('inp').addEventListener('keydown', (e) => { 
             if(e.key==='Enter' && !e.shiftKey) { e.preventDefault(); send(); } 
         });
