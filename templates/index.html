@@ -3,174 +3,187 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>VinOS Ultima</title>
-    <link rel="icon" href="https://t4.ftcdn.net/jpg/03/33/10/19/360_F_333101957_kYiZiasjb6SXJWqYchZ36H5MuFFsKtfv.jpg">
+    <title>VinOS | Neural Interface</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&family=Orbitron:wght@500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;600&family=Rajdhani:wght@500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <style>
-        :root { --bg: #050505; --panel: #0e0e11; --text: #e5e5e5; --accent: #6366f1; --radius: 24px; --border: 1px solid rgba(255,255,255,0.08); }
-        body { background: var(--bg); color: var(--text); font-family: 'Outfit', sans-serif; overflow: hidden; }
+        :root { 
+            --bg-deep: #030305; 
+            --glass: rgba(20, 20, 25, 0.7); 
+            --border: rgba(255,255,255,0.08); 
+            --accent: #6d28d9; 
+            --accent-glow: 0 0 20px rgba(109, 40, 217, 0.4);
+            --text-main: #e2e8f0;
+        }
+        
+        body { 
+            background-color: var(--bg-deep);
+            background-image: 
+                radial-gradient(circle at 10% 20%, rgba(76, 29, 149, 0.15) 0%, transparent 40%),
+                radial-gradient(circle at 90% 80%, rgba(56, 189, 248, 0.1) 0%, transparent 40%);
+            color: var(--text-main); 
+            font-family: 'Space Grotesk', sans-serif; 
+            overflow: hidden; 
+        }
+
+        /* GLASS PANELS */
+        .glass-panel {
+            background: var(--glass);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border: 1px solid var(--border);
+        }
 
         /* ANIMATIONS */
-        @keyframes slideDown { from { transform: translateY(-100%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-
-        /* MENUS */
-        .menu-panel { 
-            transform: translateY(-150%); 
-            transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1); 
-            background: rgba(10, 10, 10, 0.95); 
-            border-bottom: var(--border); 
-            backdrop-filter: blur(20px);
-            z-index: 40;
-        }
-        .menu-open { transform: translateY(0) !important; }
-
-        /* CHAT BUBBLES */
-        .msg-user { background: var(--accent); color: white; border-radius: 18px 18px 4px 18px; max-width: 85%; box-shadow: 0 4px 15px rgba(99, 102, 241, 0.2); }
-        .msg-ai { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.05); border-radius: 18px 18px 18px 4px; max-width: 90%; }
-        .msg-ai img, .msg-user img { border-radius: 12px; margin-top: 10px; max-width: 100%; box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
-
-        /* ACTIVE BUTTON STATE */
-        .btn-active { background: var(--accent) !important; color: white !important; border-color: var(--accent) !important; box-shadow: 0 0 15px rgba(99, 102, 241, 0.4); }
+        @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        .msg-anim { animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
 
         /* SCROLLBAR */
-        ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 10px; }
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 4px; }
         
-        .header-scroll::-webkit-scrollbar { display: none; }
-        .header-scroll { -ms-overflow-style: none; scrollbar-width: none; }
+        /* CHAT BUBBLES */
+        .msg-user { 
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%); 
+            color: white; 
+            border-radius: 20px 20px 4px 20px; 
+            box-shadow: 0 4px 15px rgba(124, 58, 237, 0.3);
+        }
+        .msg-ai { 
+            background: rgba(255,255,255,0.03); 
+            border: 1px solid rgba(255,255,255,0.05); 
+            border-radius: 20px 20px 20px 4px; 
+        }
+
+        /* SIDEBAR TRANSITION */
+        .sidebar { transition: transform 0.3s ease; }
+        .sidebar-closed { transform: translateX(-100%); }
     </style>
 </head>
-<body class="h-screen flex flex-col relative">
-    
-    <div class="h-16 flex items-center justify-between px-4 sticky top-0 z-50 border-b border-white/10 bg-black/80 backdrop-blur-md">
-        <div class="flex items-center gap-2 shrink-0">
-            <div class="w-8 h-8 rounded-full bg-indigo-500/20 flex items-center justify-center border border-indigo-500 text-indigo-400 font-bold font-mono">V</div>
-            <div class="text-lg font-bold tracking-wider font-mono">Vin<span class="text-indigo-500">OS</span></div>
-        </div>
-        
-        <div class="flex gap-2 overflow-x-auto header-scroll ml-2 pl-2">
-            <button onclick="toggleMenu('modelMenu')" class="whitespace-nowrap px-4 py-1.5 rounded-full text-[10px] md:text-xs font-bold bg-white/5 border border-white/10 active:bg-white/20 transition uppercase tracking-widest text-cyan-400">CORE</button>
-            <button onclick="toggleMenu('personaMenu')" class="whitespace-nowrap px-4 py-1.5 rounded-full text-[10px] md:text-xs font-bold bg-white/5 border border-white/10 active:bg-white/20 transition uppercase tracking-widest text-purple-400">MODE</button>
-            <button onclick="clearHistory()" class="whitespace-nowrap px-4 py-1.5 rounded-full text-[10px] md:text-xs font-bold text-orange-400 border border-orange-500/30 active:bg-orange-500/10 transition uppercase tracking-widest">WIPE</button>
-            <a href="/logout" class="whitespace-nowrap px-4 py-1.5 rounded-full text-[10px] md:text-xs font-bold text-red-500 border border-red-500/30 active:bg-red-500/10 transition uppercase tracking-widest">EXIT</a>
-        </div>
-    </div>
+<body class="h-screen flex text-sm md:text-base">
 
-    <div id="modelMenu" class="menu-panel absolute top-16 left-0 w-full p-6 shadow-2xl flex flex-col items-center gap-4">
-        <h3 class="text-xs font-bold text-gray-500 tracking-[0.2em] uppercase mb-2">Select Neural Core</h3>
-        <div class="flex flex-wrap justify-center gap-3">
-            {% for m in models %}
-            <button onclick="setModel('{{m}}')" id="btn-{{m}}" class="p-3 text-xs border border-white/20 rounded-lg text-white w-32 bg-white/5 hover:border-indigo-500 transition font-mono uppercase">{{m}}</button>
-            {% endfor %}
-        </div>
-    </div>
-
-    <div id="personaMenu" class="menu-panel absolute top-16 left-0 w-full p-6 shadow-2xl flex flex-col items-center gap-4">
-        <h3 class="text-xs font-bold text-gray-500 tracking-[0.2em] uppercase mb-2">Personality Matrix</h3>
-        <div class="flex flex-wrap justify-center gap-3">
-            <button onclick="setPersona('normal')" id="btn-normal" class="p-3 text-xs border border-white/20 rounded-lg text-white w-28 bg-white/5">🙂 Normal</button>
-            <button onclick="setPersona('friend')" id="btn-friend" class="p-3 text-xs border border-white/20 rounded-lg text-white w-28 bg-white/5">😎 Friend</button>
-            <button onclick="setPersona('scientist')" id="btn-scientist" class="p-3 text-xs border border-white/20 rounded-lg text-white w-28 bg-white/5">⚛️ Scientist</button>
-            <button onclick="setPersona('roaster')" id="btn-roaster" class="p-3 text-xs border border-white/20 rounded-lg text-white w-28 bg-white/5">💀 Roaster</button>
-            <button onclick="setPersona('uncensored')" id="btn-uncensored" class="p-3 text-xs border border-red-500/50 text-red-400 rounded-lg w-28 bg-red-900/10">⛓️ Unchained</button>
-        </div>
-    </div>
-
-    <div id="chatFeed" class="flex-1 overflow-y-auto p-4 space-y-4 pb-32 scroll-smooth z-10">
-        <div id="welcome" class="h-full flex flex-col items-center justify-center opacity-40 select-none">
-            <div class="w-20 h-20 rounded-full border-2 border-dashed border-white/20 flex items-center justify-center animate-spin-slow">
-                <div class="w-16 h-16 rounded-full bg-white/10"></div>
+    <div id="sidebar" class="sidebar fixed md:relative w-72 h-full z-40 glass-panel border-r border-white/10 flex flex-col sidebar-closed md:transform-none">
+        <div class="p-6 border-b border-white/10 flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl bg-purple-900/30 flex items-center justify-center border border-purple-500/50 text-purple-400">
+                <i class="fas fa-brain text-xl"></i>
             </div>
-            <h1 class="text-4xl font-bold tracking-tight mt-6 font-mono">VinOS v2</h1>
-            <p class="text-[10px] mt-2 uppercase tracking-[0.3em] text-indigo-400">System Online</p>
+            <div>
+                <h1 class="font-bold font-['Rajdhani'] text-xl tracking-wide">VinOS <span class="text-purple-500">PRO</span></h1>
+                <div class="text-[10px] text-green-400 tracking-wider uppercase flex items-center gap-1">
+                    <span class="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse"></span> Online
+                </div>
+            </div>
         </div>
-    </div>
 
-    <div class="fixed bottom-0 w-full p-3 pb-5 z-20 bg-gradient-to-t from-black via-black/95 to-transparent">
-        <div id="status-bar" class="text-[9px] text-center text-gray-500 font-mono mb-2 uppercase tracking-widest opacity-0 transition-opacity">Core: <span id="current-model-display" class="text-indigo-400">NEXUS-V3</span> | Mode: <span id="current-mode-display" class="text-purple-400">Normal</span></div>
-        
-        <div class="max-w-3xl mx-auto flex items-end gap-2 p-2 bg-zinc-900/90 border border-white/10 rounded-2xl relative shadow-2xl backdrop-blur-xl">
-            
-            <button onclick="document.getElementById('fileInput').click()" class="p-3 rounded-xl text-zinc-400 hover:text-white hover:bg-white/10 transition">
-                <i class="fas fa-image"></i>
-            </button>
-            <input type="file" id="fileInput" accept="image/*" class="hidden" onchange="handleFileSelect(this)">
-            
-            <div id="previewContainer" class="hidden relative mr-2">
-                <img id="visionPreview" class="w-10 h-10 rounded-md object-cover border border-indigo-500">
-                <div onclick="clearFile()" class="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-4 h-4 flex items-center justify-center text-[10px] cursor-pointer">×</div>
+        <div class="p-6 flex-1 overflow-y-auto space-y-6">
+            <div>
+                <h3 class="text-xs text-gray-500 uppercase tracking-widest font-bold mb-3">Active Neural Core</h3>
+                <div id="model-card" class="p-4 rounded-xl bg-gradient-to-br from-white/5 to-transparent border border-white/10">
+                    <div class="text-purple-400 font-bold mb-1" id="info-model-name">NEXUS-70B</div>
+                    <div class="text-xs text-gray-400 leading-relaxed" id="info-model-desc">Balanced intelligence. Great for general tasks.</div>
+                    <div class="mt-3 flex gap-2">
+                        <span id="badge-tools" class="px-2 py-1 rounded bg-blue-500/10 text-blue-400 text-[10px] border border-blue-500/20 hidden">TOOLS ENABLED</span>
+                        <span id="badge-speed" class="px-2 py-1 rounded bg-green-500/10 text-green-400 text-[10px] border border-green-500/20">HIGH SPEED</span>
+                    </div>
+                </div>
             </div>
 
-            <textarea id="inp" rows="1" class="flex-1 bg-transparent placeholder-zinc-500 text-sm p-3 focus:outline-none resize-none max-h-32 text-white" placeholder="Enter command..."></textarea>
+            <div>
+                <h3 class="text-xs text-gray-500 uppercase tracking-widest font-bold mb-3">System Controls</h3>
+                
+                <label class="block mb-2 text-xs text-gray-400">Model Selector</label>
+                <select id="model-select" onchange="updateModelInfo()" class="w-full bg-black/40 border border-white/10 rounded-lg p-2 text-xs focus:border-purple-500 outline-none transition">
+                    {% for name, details in models.items() %}
+                    <option value="{{name}}" data-desc="{{details.desc}}" data-tools="{{details.tools}}">{{name}}</option>
+                    {% endfor %}
+                </select>
+
+                <label class="block mt-4 mb-2 text-xs text-gray-400">Persona Mode</label>
+                <select id="mode-select" class="w-full bg-black/40 border border-white/10 rounded-lg p-2 text-xs focus:border-purple-500 outline-none transition">
+                    <option value="normal">Normal (Efficient)</option>
+                    <option value="friend">Best Friend (Casual)</option>
+                    <option value="scientist">Scientist (Academic)</option>
+                    <option value="roaster">Roaster (Chaotic)</option>
+                    <option value="uncensored">Unchained (No Limits)</option>
+                </select>
+            </div>
             
-            <button id="mic-btn" onclick="toggleMic()" class="p-3 rounded-xl text-zinc-400 hover:text-red-400 hover:bg-white/10 transition">
-                <i class="fas fa-microphone"></i>
+            <button onclick="clearHistory()" class="w-full py-2 border border-red-500/30 text-red-400 rounded-lg hover:bg-red-500/10 transition text-xs font-bold uppercase tracking-wider">
+                <i class="fas fa-trash-alt mr-2"></i> Wipe Memory
             </button>
-            
-            <button onclick="send()" class="p-3 rounded-xl bg-indigo-600 text-white shadow-lg active:scale-95 hover:bg-indigo-500 transition">
-                <i class="fas fa-paper-plane"></i>
+        </div>
+
+        <div class="p-4 text-[10px] text-center text-gray-600 border-t border-white/5 font-mono">
+            SYS.VER.3.0 // POWERED BY GROQ
+        </div>
+    </div>
+
+    <div class="flex-1 flex flex-col relative h-full">
+        <div class="md:hidden h-14 flex items-center justify-between px-4 border-b border-white/10 glass-panel z-30">
+            <span class="font-bold font-['Rajdhani']">VinOS</span>
+            <button onclick="document.getElementById('sidebar').classList.toggle('sidebar-closed')" class="text-white/70">
+                <i class="fas fa-bars"></i>
             </button>
+        </div>
+
+        <div id="chatFeed" class="flex-1 overflow-y-auto p-4 md:p-8 space-y-6 pb-32">
+            <div id="welcome" class="h-full flex flex-col items-center justify-center opacity-30 select-none">
+                <div class="w-24 h-24 rounded-full border border-purple-500/30 flex items-center justify-center animate-pulse">
+                    <i class="fas fa-fingerprint text-4xl text-purple-500/50"></i>
+                </div>
+                <h2 class="mt-4 text-2xl font-['Rajdhani'] font-bold tracking-widest">SYSTEM READY</h2>
+            </div>
+        </div>
+
+        <div class="absolute bottom-0 w-full p-4 z-30 bg-gradient-to-t from-black via-black/90 to-transparent">
+            <div class="max-w-4xl mx-auto bg-[#0a0a0c] border border-white/10 rounded-2xl p-2 flex items-end shadow-2xl relative ring-1 ring-white/5">
+                
+                <div id="previewContainer" class="hidden absolute -top-16 left-0 bg-black/80 p-2 rounded-lg border border-white/10 backdrop-blur-md">
+                    <img id="visionPreview" class="h-12 w-12 rounded object-cover">
+                    <button onclick="clearFile()" class="absolute -top-2 -right-2 bg-red-500 rounded-full w-4 h-4 flex items-center justify-center text-[8px] text-white">×</button>
+                </div>
+
+                <button onclick="document.getElementById('fileInput').click()" class="p-3 text-gray-400 hover:text-white transition rounded-xl hover:bg-white/5">
+                    <i class="fas fa-plus"></i>
+                </button>
+                <input type="file" id="fileInput" accept="image/*" class="hidden" onchange="handleFileSelect(this)">
+
+                <textarea id="inp" rows="1" class="flex-1 bg-transparent border-none focus:ring-0 text-white placeholder-gray-600 px-3 py-3 max-h-32 resize-none" placeholder="Enter command or query..."></textarea>
+                
+                <button id="mic-btn" onclick="toggleMic()" class="p-3 text-gray-400 hover:text-red-400 transition rounded-xl hover:bg-white/5">
+                    <i class="fas fa-microphone"></i>
+                </button>
+                
+                <button onclick="send()" class="ml-1 p-3 bg-purple-600 hover:bg-purple-500 text-white rounded-xl shadow-lg shadow-purple-900/20 transition active:scale-95">
+                    <i class="fas fa-arrow-up"></i>
+                </button>
+            </div>
+            <div class="text-center text-[10px] text-gray-600 mt-2 font-mono">SECURE CONNECTION ESTABLISHED</div>
         </div>
     </div>
 
     <script>
-        // --- STATE ---
+        // --- LOGIC ---
         let history = [];
         let selectedFile = null;
-        let currentPersona = 'normal';
-        let currentModel = 'NEXUS-V3';
-        
-        // --- INITIALIZATION ---
-        window.onload = () => {
-            updateStatus();
-            // Set defaults visually
-            document.getElementById('btn-normal').classList.add('btn-active');
-            const defaultModelBtn = document.getElementById('btn-NEXUS-V3');
-            if(defaultModelBtn) defaultModelBtn.classList.add('btn-active');
-        };
 
-        function updateStatus() {
-            document.getElementById('current-model-display').innerText = currentModel;
-            document.getElementById('current-mode-display').innerText = currentPersona.toUpperCase();
-            document.getElementById('status-bar').style.opacity = 1;
-        }
+        // Init
+        window.onload = () => { updateModelInfo(); };
 
-        // --- MENUS ---
-        function toggleMenu(menuId) {
-            const menu = document.getElementById(menuId);
-            const otherId = menuId === 'modelMenu' ? 'personaMenu' : 'modelMenu';
-            document.getElementById(otherId).classList.remove('menu-open');
-            menu.classList.toggle('menu-open');
-        }
-
-        function setPersona(p) {
-            currentPersona = p;
-            document.querySelectorAll('#personaMenu button').forEach(b => b.classList.remove('btn-active'));
-            document.getElementById(`btn-${p}`).classList.add('btn-active');
-            toggleMenu('personaMenu');
-            updateStatus();
-            appendMsg('system', `Personality switched to: <b>${p.toUpperCase()}</b>`);
-        }
-
-        function setModel(m) {
-            currentModel = m;
-            document.querySelectorAll('#modelMenu button').forEach(b => b.classList.remove('btn-active'));
-            document.getElementById(`btn-${m}`).classList.add('btn-active');
-            toggleMenu('modelMenu');
-            updateStatus();
-            appendMsg('system', `Neural Core switched to: <b>${m}</b>`);
+        function updateModelInfo() {
+            const select = document.getElementById('model-select');
+            const opt = select.options[select.selectedIndex];
             
-            if(m === 'OMEGA-1') {
-                setTimeout(() => appendMsg('system', 'ℹ️ <b>OMEGA-1 Activated:</b> Web Search & Python Code Execution enabled.'), 500);
-            }
+            document.getElementById('info-model-name').innerText = opt.value;
+            document.getElementById('info-model-desc').innerText = opt.getAttribute('data-desc');
+            
+            const hasTools = opt.getAttribute('data-tools') === "True";
+            document.getElementById('badge-tools').style.display = hasTools ? 'inline-block' : 'none';
         }
 
-        // --- FILE HANDLING ---
         function handleFileSelect(input) {
             if (input.files && input.files[0]) {
                 selectedFile = input.files[0];
@@ -182,25 +195,24 @@
                 reader.readAsDataURL(selectedFile);
             }
         }
+        
         function clearFile() {
             selectedFile = null;
             document.getElementById('fileInput').value = '';
             document.getElementById('previewContainer').classList.add('hidden');
         }
 
-        // --- SEND LOGIC ---
         async function send() {
             const inp = document.getElementById('inp');
             const txt = inp.value.trim();
             if(!txt && !selectedFile) return;
 
-            // UI Updates
             document.getElementById('welcome')?.remove();
             
-            // Render User Msg
-            if (selectedFile) {
+            // Add User Message
+            if(selectedFile) {
                 const reader = new FileReader();
-                reader.onload = (e) => appendMsg('user', `<img src="${e.target.result}" style="max-height:150px"><br>${txt}`);
+                reader.onload = (e) => appendMsg('user', `<img src="${e.target.result}" class="max-h-32 rounded-lg border border-white/20 mb-2"><br>${txt}`);
                 reader.readAsDataURL(selectedFile);
                 document.getElementById('previewContainer').classList.add('hidden');
             } else {
@@ -208,22 +220,22 @@
             }
             inp.value = '';
 
-            // Loading Indicator
+            // Loading State
             const loadId = 'load-' + Date.now();
             const feed = document.getElementById('chatFeed');
             const loader = document.createElement('div');
             loader.id = loadId;
-            loader.className = 'flex justify-start opacity-50 text-xs ml-2 mt-2 font-mono';
-            loader.innerHTML = '<span class="animate-pulse">PROCESSING DATA STREAM...</span>';
+            loader.className = 'flex gap-2 items-center text-xs text-purple-400 font-mono ml-4 mt-2 opacity-70';
+            loader.innerHTML = '<i class="fas fa-circle-notch animate-spin"></i> PROCESSING...';
             feed.appendChild(loader);
             feed.scrollTop = feed.scrollHeight;
 
             try {
                 let data;
-                if (selectedFile) {
+                if(selectedFile) {
                     const formData = new FormData();
                     formData.append('file', selectedFile);
-                    formData.append('prompt', txt || "Analyze this image.");
+                    formData.append('prompt', txt || "Analyze this image");
                     selectedFile = null;
                     const res = await fetch('/api/vision', { method: 'POST', body: formData });
                     data = await res.json();
@@ -234,78 +246,50 @@
                         body: JSON.stringify({ 
                             message: txt, 
                             history: history, 
-                            mode: currentPersona,
-                            model: currentModel 
+                            mode: document.getElementById('mode-select').value,
+                            model: document.getElementById('model-select').value
                         }) 
                     });
                     data = await res.json();
                 }
-                
+
                 document.getElementById(loadId).remove();
                 
-                const responseText = data.response || "System Error.";
-                appendMsg('ai', responseText);
+                const response = data.response || "Error.";
+                appendMsg('ai', response);
                 
-                // Don't add images or system errors to history context
-                if(!responseText.includes('![') && !responseText.includes('SYSTEM ERROR')) {
-                    history.push({"role": "assistant", "content": responseText});
+                if(!response.includes('SYSTEM OVERLOAD')) {
+                    history.push({"role": "assistant", "content": response});
                 }
 
             } catch(e) {
                 document.getElementById(loadId).remove();
-                appendMsg('ai', "❌ **CONNECTION LOST**");
+                appendMsg('ai', "❌ CONNECTION FAILED");
             }
         }
 
         function appendMsg(role, text) {
             const div = document.createElement('div');
-            const isUser = role === 'user';
-            const isSystem = role === 'system';
+            div.className = `flex ${role === 'user' ? 'justify-end' : 'justify-start'} msg-anim`;
             
-            div.className = `flex ${isUser ? 'justify-end' : 'justify-start'}`;
+            let html = marked.parse(text);
+            div.innerHTML = `<div class="p-4 max-w-[85%] ${role === 'user' ? 'msg-user' : 'msg-ai'} shadow-lg text-sm md:text-base leading-relaxed break-words">${html}</div>`;
             
-            if (isSystem) {
-                div.className = 'flex justify-center my-4';
-                div.innerHTML = `<div class="text-[10px] uppercase tracking-widest text-white/30 border border-white/10 px-3 py-1 rounded-full bg-white/5">${text}</div>`;
-            } else {
-                let html = marked.parse(text);
-                // TTS Button for AI
-                if(role === 'ai' && !text.includes('![')) {
-                    const safeText = text.replace(/"/g, "&quot;").replace(/'/g, "\\'");
-                    html += `<div class="mt-2 pt-2 border-t border-white/5 flex gap-2">
-                        <button onclick="playVoice('${safeText}')" class="text-white/40 hover:text-white transition text-xs"><i class="fas fa-volume-up"></i></button>
-                        <button onclick="navigator.clipboard.writeText('${safeText}')" class="text-white/40 hover:text-white transition text-xs"><i class="fas fa-copy"></i></button>
-                    </div>`;
-                }
-                div.innerHTML = `<div class="p-4 ${isUser ? 'msg-user' : 'msg-ai'} text-sm leading-relaxed shadow-lg break-words">${html}</div>`;
-            }
-
             const feed = document.getElementById('chatFeed');
             feed.appendChild(div);
             feed.scrollTop = feed.scrollHeight;
         }
 
-        async function playVoice(text) {
-            try {
-                const res = await fetch('/api/tts', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ text: text }) });
-                const blob = await res.blob();
-                const audio = new Audio(URL.createObjectURL(blob));
-                audio.play();
-            } catch(e) {}
-        }
-        
         function clearHistory() {
             history = [];
             document.getElementById('chatFeed').innerHTML = `
-                <div class="h-full flex flex-col items-center justify-center opacity-40 select-none">
-                    <h1 class="text-3xl font-bold tracking-tight">Memory Wiped</h1>
-                    <p class="text-[10px] mt-2 uppercase">Ready for input</p>
+                <div class="h-full flex flex-col items-center justify-center opacity-30 select-none">
+                    <h2 class="text-xl font-mono text-red-400">MEMORY WIPED</h2>
                 </div>`;
         }
-        
-        // Voice Input
+
         function toggleMic() {
-            if (!('webkitSpeechRecognition' in window)) return alert("Voice requires Chrome.");
+            if (!('webkitSpeechRecognition' in window)) return alert("Voice unavailable.");
             const r = new webkitSpeechRecognition();
             const btn = document.getElementById('mic-btn');
             r.lang = 'en-US';
@@ -315,7 +299,7 @@
             r.start();
         }
 
-        // Enter key to send
+        // Enter to send
         document.getElementById('inp').addEventListener('keydown', (e) => { 
             if(e.key==='Enter' && !e.shiftKey) { e.preventDefault(); send(); } 
         });
