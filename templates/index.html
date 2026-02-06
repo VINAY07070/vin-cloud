@@ -4,108 +4,55 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>VinOS | Neural Interface</title>
-    
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <style>
-        /* --- THEME VARIABLES --- */
-        :root { 
-            --bg-deep: #050508; 
-            --glass-panel: rgba(15, 15, 20, 0.65); 
-            --glass-border: rgba(255,255,255,0.08); 
-            --accent-primary: #8b5cf6; 
-            --text-main: #e2e8f0;
-            --neon-glow: 0 0 15px rgba(139, 92, 246, 0.3);
-        }
+        :root { --bg-deep: #050508; --accent: #8b5cf6; --glass: rgba(20,20,25,0.7); }
+        body { background: var(--bg-deep); color: #e2e8f0; font-family: 'Outfit', sans-serif; overflow: hidden; 
+               background-image: radial-gradient(at 0% 0%, rgba(139, 92, 246, 0.1) 0, transparent 50%); }
         
-        body { 
-            background-color: var(--bg-deep);
-            background-image: 
-                radial-gradient(at 0% 0%, rgba(139, 92, 246, 0.15) 0px, transparent 50%),
-                radial-gradient(at 100% 100%, rgba(6, 182, 212, 0.15) 0px, transparent 50%);
-            background-attachment: fixed;
-            color: var(--text-main); 
-            font-family: 'Outfit', sans-serif; 
-            overflow: hidden; 
-        }
-
-        .glass {
-            background: var(--glass-panel);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
-            border: 1px solid var(--glass-border);
-        }
-
-        /* --- CHAT BUBBLES --- */
-        .msg-user { 
-            background: linear-gradient(135deg, var(--accent-primary) 0%, #6d28d9 100%); 
-            color: white; 
-            border-radius: 20px 20px 4px 20px; 
-            box-shadow: var(--neon-glow);
-        }
-        .msg-ai { 
-            background: rgba(255, 255, 255, 0.03); 
-            border: 1px solid rgba(255, 255, 255, 0.08); 
-            border-radius: 20px 20px 20px 4px; 
-        }
+        .glass { background: var(--glass); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.08); }
+        .msg-user { background: linear-gradient(135deg, var(--accent) 0%, #6d28d9 100%); color: white; border-radius: 20px 20px 4px 20px; }
+        .msg-ai { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 20px 20px 20px 4px; }
         
-        /* IMAGE FIXES: Forces images to be big and visible */
-        .msg-ai img, .msg-user img {
-            width: 100%;
-            max-width: 500px;
-            height: auto;
-            border-radius: 12px;
-            margin-top: 10px;
-            border: 1px solid rgba(255,255,255,0.1);
-            display: block;
+        /* Image Styling */
+        .msg-ai img { width: 100%; max-width: 512px; border-radius: 12px; box-shadow: 0 8px 30px rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.1); }
+        
+        /* Download Button */
+        .download-btn {
+            display: inline-flex; items-center: center; gap: 8px; margin-top: 10px;
+            padding: 8px 16px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 8px; font-size: 12px; font-weight: bold; color: #fff; text-decoration: none;
+            transition: all 0.2s;
         }
+        .download-btn:hover { background: #8b5cf6; border-color: #8b5cf6; transform: translateY(-2px); }
 
-        /* SCROLLBAR */
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
-
-        /* ANIMATIONS */
-        @keyframes slideIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        .anim-entry { animation: slideIn 0.3s ease-out forwards; }
-        
         .sidebar-closed { transform: translateX(-100%); }
         @media (min-width: 768px) { .sidebar-closed { transform: none; } }
     </style>
 </head>
-<body class="h-screen flex flex-col md:flex-row relative text-sm md:text-base selection:bg-purple-500/30">
+<body class="h-screen flex flex-col md:flex-row text-sm md:text-base">
 
     <div id="sidebar" class="fixed inset-y-0 left-0 w-72 glass z-40 transition-transform duration-300 sidebar-closed md:relative md:transform-none flex flex-col">
         <div class="p-6 border-b border-white/5 flex items-center gap-3">
-            <div class="w-10 h-10 rounded-xl bg-purple-500/10 flex items-center justify-center border border-purple-500/20 text-purple-400">
-                <i class="fas fa-dna text-lg"></i>
-            </div>
-            <div>
-                <h1 class="font-bold font-['Rajdhani'] text-xl tracking-wider text-white">VinOS <span class="text-xs text-purple-400">V3</span></h1>
-                <div class="text-[10px] text-green-400 font-mono tracking-widest uppercase">System Online</div>
-            </div>
-            <button onclick="toggleSidebar()" class="md:hidden ml-auto text-gray-400"><i class="fas fa-times"></i></button>
+            <div class="w-10 h-10 rounded-xl bg-purple-500/10 flex items-center justify-center border border-purple-500/20 text-purple-400"><i class="fas fa-dna text-lg"></i></div>
+            <h1 class="font-bold font-['Rajdhani'] text-xl tracking-wider">VinOS <span class="text-xs text-purple-400">PRO</span></h1>
+            <button onclick="document.getElementById('sidebar').classList.toggle('sidebar-closed')" class="md:hidden ml-auto text-gray-400"><i class="fas fa-times"></i></button>
         </div>
 
-        <div class="flex-1 overflow-y-auto p-6 space-y-6">
-            <div>
-                <h3 class="text-[10px] text-gray-500 font-bold uppercase tracking-[0.2em] mb-2">Neural Core</h3>
-                <div class="p-4 rounded-xl bg-white/5 border border-white/5">
-                    <div id="info-model-name" class="font-bold text-white mb-1">...</div>
-                    <div id="info-model-desc" class="text-xs text-gray-400">Loading...</div>
-                </div>
-            </div>
-
+        <div class="flex-1 p-6 space-y-6 overflow-y-auto">
             <div class="space-y-4">
                 <label class="block text-xs text-gray-400">Model Architecture</label>
-                <select id="model-select" onchange="updateModelInfo()" class="w-full bg-black/40 border border-white/10 rounded-xl p-3 text-xs text-gray-200 outline-none focus:border-purple-500">
+                <select id="model-select" class="w-full bg-black/40 border border-white/10 rounded-xl p-3 text-xs text-gray-200 outline-none focus:border-purple-500">
                     {% for name, details in models.items() %}
-                    <option value="{{name}}" data-desc="{{details.desc}}" data-tools="{{details.tools}}">{{name}}</option>
+                    <option value="{{name}}">{{name}}</option>
                     {% endfor %}
                 </select>
-
                 <label class="block text-xs text-gray-400">Persona Matrix</label>
                 <select id="mode-select" class="w-full bg-black/40 border border-white/10 rounded-xl p-3 text-xs text-gray-200 outline-none focus:border-purple-500">
                     <option value="normal">🔵 Normal</option>
@@ -116,42 +63,29 @@
                 </select>
             </div>
         </div>
-
         <div class="p-6 border-t border-white/5">
-            <button onclick="clearHistory()" class="w-full py-3 rounded-xl border border-red-500/20 text-red-400 hover:bg-red-500/10 transition text-xs font-bold uppercase">Wipe Memory</button>
+            <button onclick="location.reload()" class="w-full py-3 rounded-xl border border-red-500/20 text-red-400 hover:bg-red-500/10 transition text-xs font-bold uppercase">Reset System</button>
         </div>
     </div>
 
-    <div class="flex-1 flex flex-col h-full relative z-0">
-        
-        <div class="md:hidden h-16 flex items-center justify-between px-4 absolute top-0 left-0 w-full z-30 glass border-b border-white/5">
-            <span class="font-bold font-['Rajdhani'] text-lg">VinOS</span>
-            <button onclick="toggleSidebar()" class="text-white/70"><i class="fas fa-bars"></i></button>
+    <div class="flex-1 flex flex-col h-full relative">
+        <div class="md:hidden h-16 flex items-center justify-between px-4 glass border-b border-white/5 z-30 absolute w-full">
+            <span class="font-bold font-['Rajdhani']">VinOS</span>
+            <button onclick="document.getElementById('sidebar').classList.toggle('sidebar-closed')" class="text-white"><i class="fas fa-bars"></i></button>
         </div>
 
         <div id="chatFeed" class="flex-1 overflow-y-auto px-4 pt-20 md:pt-8 pb-[180px] space-y-6 scroll-smooth">
             <div id="welcome" class="h-full flex flex-col items-center justify-center opacity-40 select-none min-h-[50vh]">
-                <h2 class="text-3xl font-['Rajdhani'] font-bold tracking-widest text-white">SYSTEM READY</h2>
-                <p class="text-sm text-gray-500 font-mono mt-2">Waiting for input...</p>
+                <h2 class="text-3xl font-['Rajdhani'] font-bold tracking-widest">SYSTEM READY</h2>
             </div>
         </div>
 
         <div class="absolute bottom-0 left-0 w-full p-4 md:p-6 z-50 pointer-events-none">
             <div class="max-w-4xl mx-auto pointer-events-auto">
-                <div class="glass rounded-2xl p-2 flex items-end gap-2 relative shadow-2xl bg-black/60">
-                    
-                    <div id="previewContainer" class="hidden absolute -top-20 left-0 bg-black/80 p-2 rounded-xl border border-white/10 backdrop-blur-md shadow-lg">
-                        <img id="visionPreview" class="h-14 w-14 rounded-lg object-cover">
-                        <button onclick="clearFile()" class="absolute -top-2 -right-2 bg-red-500 rounded-full w-5 h-5 flex items-center justify-center text-[10px] text-white">✕</button>
-                    </div>
-
-                    <button onclick="document.getElementById('fileInput').click()" class="p-3.5 text-gray-400 hover:text-white hover:bg-white/10 rounded-xl transition"><i class="fas fa-image text-lg"></i></button>
-                    <input type="file" id="fileInput" accept="image/*" class="hidden" onchange="handleFileSelect(this)">
-
-                    <textarea id="inp" rows="1" class="flex-1 bg-transparent border-none focus:ring-0 text-white placeholder-gray-500 px-2 py-3.5 max-h-32 resize-none" placeholder="Ask anything..."></textarea>
-                    
-                    <button id="mic-btn" onclick="toggleMic()" class="p-3.5 text-gray-400 hover:text-red-400 hover:bg-white/10 rounded-xl transition"><i class="fas fa-microphone text-lg"></i></button>
-                    
+                <div class="glass rounded-2xl p-2 flex items-end gap-2 relative shadow-2xl bg-black/80">
+                    <button onclick="document.getElementById('fileInput').click()" class="p-3.5 text-gray-400 hover:text-white rounded-xl transition"><i class="fas fa-image text-lg"></i></button>
+                    <input type="file" id="fileInput" accept="image/*" class="hidden">
+                    <textarea id="inp" rows="1" class="flex-1 bg-transparent border-none focus:ring-0 text-white px-2 py-3.5 max-h-32 resize-none" placeholder="Enter command..."></textarea>
                     <button onclick="send()" class="p-3.5 bg-purple-600 hover:bg-purple-500 text-white rounded-xl shadow-lg transition active:scale-95"><i class="fas fa-paper-plane text-lg"></i></button>
                 </div>
             </div>
@@ -160,124 +94,74 @@
 
     <script>
         let history = [];
-        let selectedFile = null;
-
-        window.onload = () => { updateModelInfo(); };
-        function toggleSidebar() { document.getElementById('sidebar').classList.toggle('sidebar-closed'); }
-
-        function updateModelInfo() {
-            const select = document.getElementById('model-select');
-            const opt = select.options[select.selectedIndex];
-            document.getElementById('info-model-name').innerText = opt.value;
-            document.getElementById('info-model-desc').innerText = opt.getAttribute('data-desc');
-        }
-
-        function handleFileSelect(input) {
-            if (input.files && input.files[0]) {
-                selectedFile = input.files[0];
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    document.getElementById('visionPreview').src = e.target.result;
-                    document.getElementById('previewContainer').classList.remove('hidden');
-                };
-                reader.readAsDataURL(selectedFile);
-            }
-        }
-        
-        function clearFile() {
-            selectedFile = null;
-            document.getElementById('fileInput').value = '';
-            document.getElementById('previewContainer').classList.add('hidden');
-        }
 
         async function send() {
             const inp = document.getElementById('inp');
             const txt = inp.value.trim();
-            if(!txt && !selectedFile) return;
+            if(!txt) return;
 
             document.getElementById('welcome')?.remove();
-            
-            if(selectedFile) {
-                const reader = new FileReader();
-                reader.onload = (e) => appendMsg('user', `<img src="${e.target.result}" class="max-h-48 rounded-lg border border-white/10 mb-2 shadow-md"><br>${txt}`);
-                reader.readAsDataURL(selectedFile);
-                document.getElementById('previewContainer').classList.add('hidden');
-            } else {
-                appendMsg('user', txt);
-            }
+            appendMsg('user', txt);
             inp.value = '';
 
-            const loadId = 'load-' + Date.now();
             const feed = document.getElementById('chatFeed');
             const loader = document.createElement('div');
-            loader.id = loadId;
-            loader.className = 'flex gap-1 items-center ml-4 mt-2 opacity-70 text-xs text-purple-400 font-mono';
-            loader.innerHTML = 'PROCESSING DATA...';
+            loader.id = 'loader';
+            loader.className = 'ml-4 mt-2 text-xs text-purple-400 font-mono animate-pulse';
+            loader.innerText = 'GENERATING...';
             feed.appendChild(loader);
             feed.scrollTop = feed.scrollHeight;
 
             try {
-                let data;
-                if(selectedFile) {
-                    const formData = new FormData();
-                    formData.append('file', selectedFile);
-                    formData.append('prompt', txt || "Analyze this");
-                    selectedFile = null;
-                    const res = await fetch('/api/vision', { method: 'POST', body: formData });
-                    data = await res.json();
-                } else {
-                    const res = await fetch('/api/chat', { 
-                        method: 'POST', 
-                        headers: {'Content-Type': 'application/json'}, 
-                        body: JSON.stringify({ 
-                            message: txt, 
-                            history: history, 
-                            mode: document.getElementById('mode-select').value,
-                            model: document.getElementById('model-select').value
-                        }) 
-                    });
-                    data = await res.json();
-                }
-
-                document.getElementById(loadId).remove();
-                const response = data.response || "Error.";
-                appendMsg('ai', response);
-                
-                if(!response.includes('SYSTEM OVERLOAD') && !response.includes('![')) {
-                    history.push({"role": "assistant", "content": response});
+                const res = await fetch('/api/chat', { 
+                    method: 'POST', 
+                    headers: {'Content-Type': 'application/json'}, 
+                    body: JSON.stringify({ 
+                        message: txt, 
+                        history: history, 
+                        mode: document.getElementById('mode-select').value,
+                        model: document.getElementById('model-select').value
+                    }) 
+                });
+                const data = await res.json();
+                document.getElementById('loader').remove();
+                appendMsg('ai', data.response || "Error");
+                if(data.response && !data.response.includes('![') && !data.response.includes('Error')) {
+                    history.push({"role": "assistant", "content": data.response});
                 }
             } catch(e) {
-                document.getElementById(loadId).remove();
-                appendMsg('ai', "❌ CONNECTION LOST");
+                document.getElementById('loader').remove();
+                appendMsg('ai', "❌ Connection Failed");
             }
         }
 
         function appendMsg(role, text) {
             const div = document.createElement('div');
-            div.className = `flex ${role === 'user' ? 'justify-end' : 'justify-start'} anim-entry`;
+            div.className = `flex ${role === 'user' ? 'justify-end' : 'justify-start'} mb-4`;
             
             let html = marked.parse(text);
-            div.innerHTML = `<div class="p-4 md:p-5 max-w-[85%] ${role === 'user' ? 'msg-user' : 'msg-ai'} text-sm md:text-base leading-relaxed shadow-lg overflow-hidden break-words">${html}</div>`;
+            div.innerHTML = `<div class="p-4 md:p-5 max-w-[85%] ${role === 'user' ? 'msg-user' : 'msg-ai'} shadow-lg overflow-hidden break-words">${html}</div>`;
             
+            // SMART DOWNLOAD BUTTON INJECTOR
+            const img = div.querySelector('img');
+            if (role === 'ai' && img) {
+                // Ensure image loads first so we have src
+                img.onload = () => {
+                    const btn = document.createElement('a');
+                    btn.href = img.src;
+                    btn.download = `VinOS-Gen-${Date.now()}.png`;
+                    btn.className = 'download-btn';
+                    btn.innerHTML = '<i class="fas fa-download"></i> Download High-Res';
+                    img.parentNode.appendChild(btn);
+                    
+                    // Auto scroll after image loads
+                    document.getElementById('chatFeed').scrollTop = document.getElementById('chatFeed').scrollHeight;
+                };
+            }
+
             const feed = document.getElementById('chatFeed');
             feed.appendChild(div);
             feed.scrollTop = feed.scrollHeight;
-        }
-
-        function clearHistory() {
-            history = [];
-            document.getElementById('chatFeed').innerHTML = '<div class="h-full flex flex-col items-center justify-center opacity-40 select-none min-h-[50vh]"><h2 class="text-xl font-mono text-red-400">MEMORY FORMATTED</h2></div>';
-        }
-
-        function toggleMic() {
-            if (!('webkitSpeechRecognition' in window)) return alert("Voice unavailable.");
-            const r = new webkitSpeechRecognition();
-            const btn = document.getElementById('mic-btn');
-            r.lang = 'en-US';
-            r.onstart = () => btn.classList.add('text-red-500');
-            r.onend = () => btn.classList.remove('text-red-500');
-            r.onresult = (e) => { document.getElementById('inp').value = e.results[0][0].transcript; send(); };
-            r.start();
         }
 
         document.getElementById('inp').addEventListener('keydown', (e) => { 
