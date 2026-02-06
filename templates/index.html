@@ -7,107 +7,97 @@
     <link rel="icon" href="https://t4.ftcdn.net/jpg/03/33/10/19/360_F_333101957_kYiZiasjb6SXJWqYchZ36H5MuFFsKtfv.jpg">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&family=Orbitron:wght@500&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&family=Orbitron:wght@500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <style>
-        /* --- CORE THEME VARIABLES --- */
-        :root { --bg: #030303; --panel: #0e0e11; --text: #e5e5e5; --accent: #6366f1; --radius: 24px; --border: 1px solid rgba(255,255,255,0.08); }
-        [data-theme="cyberpunk"] { --bg: #05000a; --panel: #1a0b2e; --text: #ffccff; --accent: #d946ef; --radius: 4px; --border: 1px solid rgba(217, 70, 239, 0.3); }
-        [data-theme="matrix"] { --bg: #000; --panel: #001100; --text: #00ff41; --accent: #008f11; --radius: 0px; --border: 1px solid rgba(0, 255, 65, 0.2); }
-        
-        body { background: var(--bg); color: var(--text); font-family: 'Outfit', sans-serif; overflow: hidden; transition: background 0.5s; }
-        [data-theme="matrix"] body { font-family: 'Share Tech Mono', monospace; }
+        :root { --bg: #050505; --panel: #0e0e11; --text: #e5e5e5; --accent: #6366f1; --radius: 24px; --border: 1px solid rgba(255,255,255,0.08); }
+        body { background: var(--bg); color: var(--text); font-family: 'Outfit', sans-serif; overflow: hidden; }
 
-        /* --- ANIMATIONS --- */
+        /* ANIMATIONS */
         @keyframes slideDown { from { transform: translateY(-100%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-        @keyframes float { 0% { transform: translateY(0px); } 50% { transform: translateY(-10px); } 100% { transform: translateY(0px); } }
-        @keyframes pulseGlow { 0% { box-shadow: 0 0 5px var(--accent); } 50% { box-shadow: 0 0 20px var(--accent); } 100% { box-shadow: 0 0 5px var(--accent); } }
 
-        /* --- UI ELEMENTS --- */
-        #matrixCanvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; opacity: 0; transition: opacity 1s; pointer-events: none; }
-        [data-theme="matrix"] #matrixCanvas { opacity: 0.3; }
-
-        /* Header Scroll for Mobile */
-        .header-scroll::-webkit-scrollbar { display: none; }
-        .header-scroll { -ms-overflow-style: none; scrollbar-width: none; }
-
-        /* Menus */
-        #settingsMenu, #personaMenu { 
+        /* MENUS */
+        .menu-panel { 
             transform: translateY(-150%); 
             transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1); 
-            background: var(--panel); 
+            background: rgba(10, 10, 10, 0.95); 
             border-bottom: var(--border); 
+            backdrop-filter: blur(20px);
             z-index: 40;
         }
         .menu-open { transform: translateY(0) !important; }
 
-        /* Chat Bubbles */
-        .msg-user { background: var(--accent); color: white; border-radius: 18px 18px 4px 18px; max-width: 85%; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
+        /* CHAT BUBBLES */
+        .msg-user { background: var(--accent); color: white; border-radius: 18px 18px 4px 18px; max-width: 85%; box-shadow: 0 4px 15px rgba(99, 102, 241, 0.2); }
         .msg-ai { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.05); border-radius: 18px 18px 18px 4px; max-width: 90%; }
-        .msg-ai img, .msg-user img { border-radius: 12px; margin-top: 10px; max-width: 100%; }
+        .msg-ai img, .msg-user img { border-radius: 12px; margin-top: 10px; max-width: 100%; box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
 
-        /* Input Area */
-        .input-box { background: var(--panel); border: var(--border); border-radius: var(--radius); transition: 0.3s; }
-        .input-box:focus-within { border-color: var(--accent); box-shadow: 0 0 15px rgba(99, 102, 241, 0.2); }
+        /* ACTIVE BUTTON STATE */
+        .btn-active { background: var(--accent) !important; color: white !important; border-color: var(--accent) !important; box-shadow: 0 0 15px rgba(99, 102, 241, 0.4); }
 
-        /* Icons */
-        .icon-btn { padding: 10px; border-radius: 50%; transition: 0.2s; cursor: pointer; }
-        .icon-btn:active { transform: scale(0.9); background: rgba(255,255,255,0.1); }
-        .mic-active { color: #ef4444 !important; animation: pulseGlow 1.5s infinite; }
-
-        /* Vinay Signature */
-        .signature {
-            position: fixed; bottom: 5px; right: 10px; 
-            font-size: 10px; opacity: 0.3; pointer-events: none; 
-            font-family: 'Orbitron', sans-serif; letter-spacing: 1px;
-            z-index: 60;
-        }
+        /* SCROLLBAR */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 10px; }
+        
+        .header-scroll::-webkit-scrollbar { display: none; }
+        .header-scroll { -ms-overflow-style: none; scrollbar-width: none; }
     </style>
 </head>
-<body class="h-screen flex flex-col relative" data-theme="stealth">
+<body class="h-screen flex flex-col relative">
     
-    <canvas id="matrixCanvas"></canvas>
-    
-    <div class="h-16 backdrop-blur-md flex items-center justify-between px-4 sticky top-0 z-50 border-b border-white/10" style="border-color: var(--border)">
+    <div class="h-16 flex items-center justify-between px-4 sticky top-0 z-50 border-b border-white/10 bg-black/80 backdrop-blur-md">
         <div class="flex items-center gap-2 shrink-0">
-            <img src="https://t4.ftcdn.net/jpg/03/33/10/19/360_F_333101957_kYiZiasjb6SXJWqYchZ36H5MuFFsKtfv.jpg" class="w-8 h-8 rounded-full shadow-lg">
-            <div class="text-lg font-bold tracking-wider">Vin<span style="color: var(--accent)">OS</span></div>
+            <div class="w-8 h-8 rounded-full bg-indigo-500/20 flex items-center justify-center border border-indigo-500 text-indigo-400 font-bold font-mono">V</div>
+            <div class="text-lg font-bold tracking-wider font-mono">Vin<span class="text-indigo-500">OS</span></div>
         </div>
         
         <div class="flex gap-2 overflow-x-auto header-scroll ml-2 pl-2">
-            <button onclick="safeToggle('personaMenu')" class="whitespace-nowrap px-3 py-1.5 rounded-full text-[10px] md:text-xs font-bold bg-white/5 border border-white/10 active:bg-white/20 transition">BRAIN</button>
-            <button onclick="safeToggle('settingsMenu')" class="whitespace-nowrap px-3 py-1.5 rounded-full text-[10px] md:text-xs font-bold bg-white/5 border border-white/10 active:bg-white/20 transition">THEME</button>
-            <button onclick="clearHistory()" class="whitespace-nowrap px-3 py-1.5 rounded-full text-[10px] md:text-xs font-bold text-orange-400 border border-orange-500/30 active:bg-orange-500/10 transition">WIPE</button>
-            <a href="/logout" class="whitespace-nowrap px-3 py-1.5 rounded-full text-[10px] md:text-xs font-bold text-red-500 border border-red-500/30 active:bg-red-500/10 transition">EXIT</a>
+            <button onclick="toggleMenu('modelMenu')" class="whitespace-nowrap px-4 py-1.5 rounded-full text-[10px] md:text-xs font-bold bg-white/5 border border-white/10 active:bg-white/20 transition uppercase tracking-widest text-cyan-400">CORE</button>
+            <button onclick="toggleMenu('personaMenu')" class="whitespace-nowrap px-4 py-1.5 rounded-full text-[10px] md:text-xs font-bold bg-white/5 border border-white/10 active:bg-white/20 transition uppercase tracking-widest text-purple-400">MODE</button>
+            <button onclick="clearHistory()" class="whitespace-nowrap px-4 py-1.5 rounded-full text-[10px] md:text-xs font-bold text-orange-400 border border-orange-500/30 active:bg-orange-500/10 transition uppercase tracking-widest">WIPE</button>
+            <a href="/logout" class="whitespace-nowrap px-4 py-1.5 rounded-full text-[10px] md:text-xs font-bold text-red-500 border border-red-500/30 active:bg-red-500/10 transition uppercase tracking-widest">EXIT</a>
         </div>
     </div>
 
-    <div id="settingsMenu" class="absolute top-16 left-0 w-full p-4 shadow-2xl flex justify-center gap-2 flex-wrap bg-black/90 backdrop-blur-xl">
-        <button onclick="setTheme('stealth')" class="p-2 text-xs bg-gray-800 border border-gray-600 rounded text-gray-200 w-20">Stealth</button>
-        <button onclick="setTheme('matrix')" class="p-2 text-xs bg-black border border-green-500 text-green-500 font-mono w-20">Matrix</button>
-        <button onclick="setTheme('cyberpunk')" class="p-2 text-xs bg-purple-900 border border-purple-500 text-purple-200 w-20">Cyber</button>
+    <div id="modelMenu" class="menu-panel absolute top-16 left-0 w-full p-6 shadow-2xl flex flex-col items-center gap-4">
+        <h3 class="text-xs font-bold text-gray-500 tracking-[0.2em] uppercase mb-2">Select Neural Core</h3>
+        <div class="flex flex-wrap justify-center gap-3">
+            {% for m in models %}
+            <button onclick="setModel('{{m}}')" id="btn-{{m}}" class="p-3 text-xs border border-white/20 rounded-lg text-white w-32 bg-white/5 hover:border-indigo-500 transition font-mono uppercase">{{m}}</button>
+            {% endfor %}
+        </div>
     </div>
 
-    <div id="personaMenu" class="absolute top-16 left-0 w-full p-4 shadow-2xl flex justify-center gap-2 flex-wrap bg-black/90 backdrop-blur-xl">
-        <button onclick="setPersona('roaster')" id="btn-roaster" class="p-3 text-xs border border-white/20 rounded text-white w-32 bg-white/5">💀 Roaster</button>
-        <button onclick="setPersona('scientist')" id="btn-scientist" class="p-3 text-xs border border-white/20 rounded text-white w-32 bg-white/5">⚛️ Scientist</button>
+    <div id="personaMenu" class="menu-panel absolute top-16 left-0 w-full p-6 shadow-2xl flex flex-col items-center gap-4">
+        <h3 class="text-xs font-bold text-gray-500 tracking-[0.2em] uppercase mb-2">Personality Matrix</h3>
+        <div class="flex flex-wrap justify-center gap-3">
+            <button onclick="setPersona('normal')" id="btn-normal" class="p-3 text-xs border border-white/20 rounded-lg text-white w-28 bg-white/5">🙂 Normal</button>
+            <button onclick="setPersona('friend')" id="btn-friend" class="p-3 text-xs border border-white/20 rounded-lg text-white w-28 bg-white/5">😎 Friend</button>
+            <button onclick="setPersona('scientist')" id="btn-scientist" class="p-3 text-xs border border-white/20 rounded-lg text-white w-28 bg-white/5">⚛️ Scientist</button>
+            <button onclick="setPersona('roaster')" id="btn-roaster" class="p-3 text-xs border border-white/20 rounded-lg text-white w-28 bg-white/5">💀 Roaster</button>
+            <button onclick="setPersona('uncensored')" id="btn-uncensored" class="p-3 text-xs border border-red-500/50 text-red-400 rounded-lg w-28 bg-red-900/10">⛓️ Unchained</button>
+        </div>
     </div>
 
     <div id="chatFeed" class="flex-1 overflow-y-auto p-4 space-y-4 pb-32 scroll-smooth z-10">
         <div id="welcome" class="h-full flex flex-col items-center justify-center opacity-40 select-none">
-            <h1 class="text-4xl font-bold tracking-tight animate-[float_4s_ease-in-out_infinite]">VinOS</h1>
-            <p class="text-[10px] mt-2 uppercase tracking-[0.3em]">System Ready</p>
-            <p class="text-[9px] mt-8 text-white/30 border-t border-white/10 pt-2">MADE BY VINAY</p>
+            <div class="w-20 h-20 rounded-full border-2 border-dashed border-white/20 flex items-center justify-center animate-spin-slow">
+                <div class="w-16 h-16 rounded-full bg-white/10"></div>
+            </div>
+            <h1 class="text-4xl font-bold tracking-tight mt-6 font-mono">VinOS v2</h1>
+            <p class="text-[10px] mt-2 uppercase tracking-[0.3em] text-indigo-400">System Online</p>
         </div>
     </div>
 
-    <div class="fixed bottom-0 w-full p-3 pb-5 z-20 bg-gradient-to-t from-black via-black/90 to-transparent">
-        <div class="max-w-3xl mx-auto flex items-end gap-2 p-1.5 input-box relative">
+    <div class="fixed bottom-0 w-full p-3 pb-5 z-20 bg-gradient-to-t from-black via-black/95 to-transparent">
+        <div id="status-bar" class="text-[9px] text-center text-gray-500 font-mono mb-2 uppercase tracking-widest opacity-0 transition-opacity">Core: <span id="current-model-display" class="text-indigo-400">NEXUS-V3</span> | Mode: <span id="current-mode-display" class="text-purple-400">Normal</span></div>
+        
+        <div class="max-w-3xl mx-auto flex items-end gap-2 p-2 bg-zinc-900/90 border border-white/10 rounded-2xl relative shadow-2xl backdrop-blur-xl">
             
-            <button onclick="document.getElementById('fileInput').click()" class="icon-btn text-zinc-500 hover:text-indigo-400">
-                <i class="fas fa-image text-lg"></i>
+            <button onclick="document.getElementById('fileInput').click()" class="p-3 rounded-xl text-zinc-400 hover:text-white hover:bg-white/10 transition">
+                <i class="fas fa-image"></i>
             </button>
             <input type="file" id="fileInput" accept="image/*" class="hidden" onchange="handleFileSelect(this)">
             
@@ -116,104 +106,68 @@
                 <div onclick="clearFile()" class="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-4 h-4 flex items-center justify-center text-[10px] cursor-pointer">×</div>
             </div>
 
-            <textarea id="inp" rows="1" class="flex-1 bg-transparent placeholder-zinc-600 text-sm p-2.5 focus:outline-none resize-none max-h-32" style="color: var(--text)" placeholder="Command..."></textarea>
+            <textarea id="inp" rows="1" class="flex-1 bg-transparent placeholder-zinc-500 text-sm p-3 focus:outline-none resize-none max-h-32 text-white" placeholder="Enter command..."></textarea>
             
-            <button id="mic-btn" onclick="toggleMic()" class="icon-btn text-zinc-500 hover:text-red-400">
-                <i class="fas fa-microphone text-lg"></i>
+            <button id="mic-btn" onclick="toggleMic()" class="p-3 rounded-xl text-zinc-400 hover:text-red-400 hover:bg-white/10 transition">
+                <i class="fas fa-microphone"></i>
             </button>
             
-            <button onclick="send()" class="p-2.5 rounded-xl text-white shadow-lg active:scale-95 transition" style="background-color: var(--accent)">
-                <i class="fas fa-paper-plane text-sm"></i>
+            <button onclick="send()" class="p-3 rounded-xl bg-indigo-600 text-white shadow-lg active:scale-95 hover:bg-indigo-500 transition">
+                <i class="fas fa-paper-plane"></i>
             </button>
         </div>
     </div>
 
-    <div class="signature">MADE BY VINAY</div>
-
     <script>
-        // --- SFX SYSTEM ---
-        const sfx = {
-            ctx: null,
-            init: function() { if(!this.ctx) this.ctx = new (window.AudioContext || window.webkitAudioContext)(); },
-            play: function(type) {
-                try {
-                    this.init();
-                    if (this.ctx.state === 'suspended') this.ctx.resume();
-                    const osc = this.ctx.createOscillator();
-                    const gain = this.ctx.createGain();
-                    osc.connect(gain);
-                    gain.connect(this.ctx.destination);
-                    const t = this.ctx.currentTime;
-                    
-                    if(type === 'click') {
-                        osc.frequency.setValueAtTime(600, t);
-                        gain.gain.setValueAtTime(0.05, t);
-                        gain.gain.exponentialRampToValueAtTime(0.001, t + 0.1);
-                        osc.start(t); osc.stop(t + 0.1);
-                    } else if (type === 'send') {
-                        osc.frequency.setValueAtTime(300, t);
-                        osc.frequency.linearRampToValueAtTime(600, t + 0.1);
-                        gain.gain.setValueAtTime(0.05, t);
-                        gain.gain.linearRampToValueAtTime(0, t + 0.1);
-                        osc.start(t); osc.stop(t + 0.1);
-                    }
-                } catch(e) { console.log('Audio blocked'); }
-            }
-        };
-
         // --- STATE ---
         let history = [];
         let selectedFile = null;
-        let currentPersona = 'roaster';
+        let currentPersona = 'normal';
+        let currentModel = 'NEXUS-V3';
+        
+        // --- INITIALIZATION ---
+        window.onload = () => {
+            updateStatus();
+            // Set defaults visually
+            document.getElementById('btn-normal').classList.add('btn-active');
+            const defaultModelBtn = document.getElementById('btn-NEXUS-V3');
+            if(defaultModelBtn) defaultModelBtn.classList.add('btn-active');
+        };
 
-        // --- MENU LOGIC (FIXED) ---
-        function safeToggle(menuId) {
-            sfx.play('click');
+        function updateStatus() {
+            document.getElementById('current-model-display').innerText = currentModel;
+            document.getElementById('current-mode-display').innerText = currentPersona.toUpperCase();
+            document.getElementById('status-bar').style.opacity = 1;
+        }
+
+        // --- MENUS ---
+        function toggleMenu(menuId) {
             const menu = document.getElementById(menuId);
-            const otherMenu = document.getElementById(menuId === 'settingsMenu' ? 'personaMenu' : 'settingsMenu');
-            
-            // Close other menu first
-            otherMenu.classList.remove('menu-open');
-            
-            // Toggle requested menu
+            const otherId = menuId === 'modelMenu' ? 'personaMenu' : 'modelMenu';
+            document.getElementById(otherId).classList.remove('menu-open');
             menu.classList.toggle('menu-open');
         }
 
-        function setTheme(t) {
-            sfx.play('click');
-            document.body.setAttribute('data-theme', t);
-            document.getElementById('settingsMenu').classList.remove('menu-open');
-            
-            // Matrix Effect Toggle
-            if(t === 'matrix') startMatrix();
-            else stopMatrix();
-        }
-
         function setPersona(p) {
-            sfx.play('click');
             currentPersona = p;
-            document.getElementById('personaMenu').classList.remove('menu-open');
-            
-            // UI Update
-            document.querySelectorAll('#personaMenu button').forEach(b => b.style.backgroundColor = 'rgba(255,255,255,0.05)');
-            document.getElementById(`btn-${p}`).style.backgroundColor = 'var(--accent)';
-            
-            appendMsg('ai', `Persona update: <b>${p.toUpperCase()}</b> initialized.`);
+            document.querySelectorAll('#personaMenu button').forEach(b => b.classList.remove('btn-active'));
+            document.getElementById(`btn-${p}`).classList.add('btn-active');
+            toggleMenu('personaMenu');
+            updateStatus();
+            appendMsg('system', `Personality switched to: <b>${p.toUpperCase()}</b>`);
         }
 
-        // --- CLEAR HISTORY ---
-        function clearHistory() {
-            sfx.play('click');
-            if(!confirm("⚠️ PURGE DATA?\n\nThis will wipe VinOS memory.")) return;
+        function setModel(m) {
+            currentModel = m;
+            document.querySelectorAll('#modelMenu button').forEach(b => b.classList.remove('btn-active'));
+            document.getElementById(`btn-${m}`).classList.add('btn-active');
+            toggleMenu('modelMenu');
+            updateStatus();
+            appendMsg('system', `Neural Core switched to: <b>${m}</b>`);
             
-            history = [];
-            const feed = document.getElementById('chatFeed');
-            feed.innerHTML = `
-                <div class="h-full flex flex-col items-center justify-center opacity-40 select-none">
-                    <h1 class="text-3xl font-bold tracking-tight">Memory Wiped</h1>
-                    <p class="text-[10px] mt-2 uppercase">System Reset by VINAY</p>
-                </div>
-            `;
+            if(m === 'OMEGA-1') {
+                setTimeout(() => appendMsg('system', 'ℹ️ <b>OMEGA-1 Activated:</b> Web Search & Python Code Execution enabled.'), 500);
+            }
         }
 
         // --- FILE HANDLING ---
@@ -240,7 +194,7 @@
             const txt = inp.value.trim();
             if(!txt && !selectedFile) return;
 
-            sfx.play('send');
+            // UI Updates
             document.getElementById('welcome')?.remove();
             
             // Render User Msg
@@ -254,23 +208,22 @@
             }
             inp.value = '';
 
-            // Loading State
+            // Loading Indicator
             const loadId = 'load-' + Date.now();
             const feed = document.getElementById('chatFeed');
             const loader = document.createElement('div');
             loader.id = loadId;
-            loader.className = 'flex justify-start opacity-50 text-xs ml-2';
-            loader.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> Processing...';
+            loader.className = 'flex justify-start opacity-50 text-xs ml-2 mt-2 font-mono';
+            loader.innerHTML = '<span class="animate-pulse">PROCESSING DATA STREAM...</span>';
             feed.appendChild(loader);
             feed.scrollTop = feed.scrollHeight;
 
-            // Prepare Request
             try {
                 let data;
                 if (selectedFile) {
                     const formData = new FormData();
                     formData.append('file', selectedFile);
-                    formData.append('prompt', txt || "Analyze this.");
+                    formData.append('prompt', txt || "Analyze this image.");
                     selectedFile = null;
                     const res = await fetch('/api/vision', { method: 'POST', body: formData });
                     data = await res.json();
@@ -278,7 +231,12 @@
                     const res = await fetch('/api/chat', { 
                         method: 'POST', 
                         headers: {'Content-Type': 'application/json'}, 
-                        body: JSON.stringify({ message: txt, history: history, mode: currentPersona }) 
+                        body: JSON.stringify({ 
+                            message: txt, 
+                            history: history, 
+                            mode: currentPersona,
+                            model: currentModel 
+                        }) 
                     });
                     data = await res.json();
                 }
@@ -287,35 +245,46 @@
                 
                 const responseText = data.response || "System Error.";
                 appendMsg('ai', responseText);
-                if(!responseText.includes('![')) history.push({"role": "assistant", "content": responseText});
+                
+                // Don't add images or system errors to history context
+                if(!responseText.includes('![') && !responseText.includes('SYSTEM ERROR')) {
+                    history.push({"role": "assistant", "content": responseText});
+                }
 
             } catch(e) {
                 document.getElementById(loadId).remove();
-                appendMsg('ai', "Connection Lost.");
+                appendMsg('ai', "❌ **CONNECTION LOST**");
             }
         }
 
         function appendMsg(role, text) {
             const div = document.createElement('div');
             const isUser = role === 'user';
+            const isSystem = role === 'system';
+            
             div.className = `flex ${isUser ? 'justify-end' : 'justify-start'}`;
             
-            let html = marked.parse(text);
-            
-            // Speaker Icon for AI
-            if(role === 'ai' && !text.includes('![')) {
-                const safeText = text.replace(/"/g, "&quot;").replace(/'/g, "\\'");
-                html += `<div class="mt-2 pt-2 border-t border-white/5"><button onclick="playVoice('${safeText}')" class="text-white/40 hover:text-white transition"><i class="fas fa-volume-up"></i></button></div>`;
+            if (isSystem) {
+                div.className = 'flex justify-center my-4';
+                div.innerHTML = `<div class="text-[10px] uppercase tracking-widest text-white/30 border border-white/10 px-3 py-1 rounded-full bg-white/5">${text}</div>`;
+            } else {
+                let html = marked.parse(text);
+                // TTS Button for AI
+                if(role === 'ai' && !text.includes('![')) {
+                    const safeText = text.replace(/"/g, "&quot;").replace(/'/g, "\\'");
+                    html += `<div class="mt-2 pt-2 border-t border-white/5 flex gap-2">
+                        <button onclick="playVoice('${safeText}')" class="text-white/40 hover:text-white transition text-xs"><i class="fas fa-volume-up"></i></button>
+                        <button onclick="navigator.clipboard.writeText('${safeText}')" class="text-white/40 hover:text-white transition text-xs"><i class="fas fa-copy"></i></button>
+                    </div>`;
+                }
+                div.innerHTML = `<div class="p-4 ${isUser ? 'msg-user' : 'msg-ai'} text-sm leading-relaxed shadow-lg break-words">${html}</div>`;
             }
 
-            div.innerHTML = `<div class="p-3.5 ${isUser ? 'msg-user' : 'msg-ai'} text-sm leading-relaxed shadow-lg break-words">${html}</div>`;
-            
             const feed = document.getElementById('chatFeed');
             feed.appendChild(div);
             feed.scrollTop = feed.scrollHeight;
         }
 
-        // --- EXTRAS ---
         async function playVoice(text) {
             try {
                 const res = await fetch('/api/tts', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ text: text }) });
@@ -324,36 +293,32 @@
                 audio.play();
             } catch(e) {}
         }
-
+        
+        function clearHistory() {
+            history = [];
+            document.getElementById('chatFeed').innerHTML = `
+                <div class="h-full flex flex-col items-center justify-center opacity-40 select-none">
+                    <h1 class="text-3xl font-bold tracking-tight">Memory Wiped</h1>
+                    <p class="text-[10px] mt-2 uppercase">Ready for input</p>
+                </div>`;
+        }
+        
+        // Voice Input
         function toggleMic() {
-            if (!('webkitSpeechRecognition' in window)) return alert("Voice requires Chrome/Edge.");
+            if (!('webkitSpeechRecognition' in window)) return alert("Voice requires Chrome.");
             const r = new webkitSpeechRecognition();
             const btn = document.getElementById('mic-btn');
             r.lang = 'en-US';
-            r.onstart = () => btn.classList.add('mic-active');
-            r.onend = () => btn.classList.remove('mic-active');
+            r.onstart = () => btn.classList.add('text-red-500', 'animate-pulse');
+            r.onend = () => btn.classList.remove('text-red-500', 'animate-pulse');
             r.onresult = (e) => { document.getElementById('inp').value = e.results[0][0].transcript; send(); };
             r.start();
         }
 
-        // Matrix Logic
-        let mInt;
-        const cvs = document.getElementById('matrixCanvas'), cx = cvs.getContext('2d');
-        function startMatrix() {
-            cvs.width = window.innerWidth; cvs.height = window.innerHeight;
-            const cols = Math.floor(cvs.width/14), drops = Array(cols).fill(1);
-            mInt = setInterval(() => {
-                cx.fillStyle = 'rgba(0,0,0,0.05)'; cx.fillRect(0,0,cvs.width,cvs.height);
-                cx.fillStyle = '#0F0'; cx.font = '14px monospace';
-                drops.forEach((y, i) => {
-                    cx.fillText(String.fromCharCode(0x30A0 + Math.random()*96), i*14, y*14);
-                    drops[i] = (y*14 > cvs.height && Math.random()>0.975) ? 0 : y+1;
-                });
-            }, 33);
-        }
-        function stopMatrix() { clearInterval(mInt); cx.clearRect(0,0,cvs.width,cvs.height); }
-
-        document.getElementById('inp').addEventListener('keydown', (e) => { if(e.key==='Enter' && !e.shiftKey) { e.preventDefault(); send(); } });
+        // Enter key to send
+        document.getElementById('inp').addEventListener('keydown', (e) => { 
+            if(e.key==='Enter' && !e.shiftKey) { e.preventDefault(); send(); } 
+        });
     </script>
 </body>
 </html>
