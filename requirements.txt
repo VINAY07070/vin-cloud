@@ -6,3 +6,4 @@ groq
 aiofiles
 edge-tts
 google-genai
+itsdangerous
