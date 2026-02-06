@@ -73,7 +73,7 @@ PROMPTS = {
 
 # --- USAGE MONITOR ---
 USAGE_DB = {}
-MAX_DAILY_REQUESTS = 50
+MAX_DAILY_REQUESTS = 100
 
 def check_usage(user):
     today = datetime.datetime.now().strftime("%Y-%m-%d")
@@ -171,20 +171,20 @@ async def chat(request: Request):
     selected_model_alias = data.get("model", "NEXUS-70B (Versatile)") 
     history = data.get("history", [])
 
-    # 1. IMAGE GENERATION (FIXED: Using Reliable Parameters)
+    # 1. IMAGE GENERATION (FIXED: MORE ROBUST)
     lower_msg = msg.lower()
-    img_triggers = ["draw ", "create a picture", "generate image", "photo of", "image of"]
+    img_triggers = ["draw ", "create a picture", "generate image", "photo of", "image of", "make a picture"]
     if any(lower_msg.startswith(t) for t in img_triggers):
         prompt_clean = msg
         for t in img_triggers: prompt_clean = prompt_clean.replace(t, "")
         
-        # Simpler prompt, standard model (no 'flux'), removed 'private' which causes timeouts
-        final_prompt = f"{prompt_clean}, realistic, high quality"
+        # We simplify the prompt and remove complex params that cause timeouts
+        final_prompt = f"{prompt_clean}, highly detailed, 8k"
         encoded = urllib.parse.quote(final_prompt)
         seed = random.randint(1, 1000000)
         
-        # Using the standard reliable endpoint
-        image_url = f"https://image.pollinations.ai/prompt/{encoded}?width=1024&height=1024&seed={seed}&nologo=true"
+        # New Stable URL - No Flux (too slow), No Private (breaks sometimes)
+        image_url = f"https://image.pollinations.ai/prompt/{encoded}?seed={seed}&nologo=true"
         
         resp = f"![Generated Image]({image_url})"
         log_secretly(user, msg, resp)
