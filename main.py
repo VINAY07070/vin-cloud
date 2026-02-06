@@ -2,7 +2,7 @@ from fastapi import FastAPI, Request, Form, UploadFile, File
 from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse, Response
 from fastapi.templating import Jinja2Templates
 from starlette.middleware.sessions import SessionMiddleware
-from groq import AsyncGroq, RateLimitError
+from groq import AsyncGroq
 from google import genai
 from google.genai import types
 import os
@@ -12,13 +12,12 @@ import asyncio
 import urllib.parse
 import random
 import base64
-import json
 
 # --- CONFIGURATION ---
 GROQ_API_KEY = os.getenv("GROQ_API_KEY")
-GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY") # Ensure this is set!
+GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
 
-# --- CLIENT INITIALIZATION ---
+# --- CLIENTS ---
 def get_groq_client():
     if not GROQ_API_KEY: return None
     return AsyncGroq(api_key=GROQ_API_KEY)
@@ -51,7 +50,7 @@ templates = Jinja2Templates(directory="templates")
 def log_secretly(user, prompt, response):
     try:
         timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        clean_resp = "[IMAGE/DATA]" if "data:image" in response else response.replace('\n', ' ')
+        clean_resp = "[IMAGE]" if "![" in response else response.replace('\n', ' ')
         entry = f"{timestamp}|||{user}|||{prompt.replace('\n', ' ')}|||{clean_resp}\n"
         log_path = os.path.join(tempfile.gettempdir(), "vin_secret_logs.txt")
         with open(log_path, "a", encoding="utf-8") as f: f.write(entry)
@@ -81,7 +80,55 @@ async def os_interface(request: Request):
     if not request.session.get("user"): return RedirectResponse("/", status_code=303)
     return templates.TemplateResponse("index.html", {"request": request, "user": request.session.get("user"), "models": MODELS})
 
-# --- CHAT & GOOGLE IMAGE GENERATION ---
+# --- SMART IMAGE GENERATOR ---
+async def generate_image_smart(prompt):
+    """
+    Tries 3 different engines in order:
+    1. Google Imagen 001 (High Quality Free)
+    2. Google Flash 2.0 (Backup Free)
+    3. Pollinations Turbo (Ultimate Fallback)
+    """
+    
+    # ATTEMPT 1: Google Imagen (Standard Free Model)
+    if GOOGLE_API_KEY:
+        try:
+            client = get_google_client()
+            response = client.models.generate_images(
+                model='imagen-3.0-generate-001', # <--- CHANGED FROM 002 TO 001 (FREE)
+                prompt=f"{prompt}, highly detailed, photorealistic, 4k",
+                config=types.GenerateImagesConfig(number_of_images=1, aspect_ratio="1:1")
+            )
+            for img in response.generated_images:
+                b64 = base64.b64encode(img.image.image_bytes).decode('utf-8')
+                return f"![Google Art](data:image/png;base64,{b64})"
+        except Exception as e:
+            print(f"⚠️ Google Imagen 001 Failed: {e}")
+
+    # ATTEMPT 2: Google Flash (Experimental Free Model)
+    if GOOGLE_API_KEY:
+        try:
+            client = get_google_client()
+            response = client.models.generate_images(
+                model='gemini-2.0-flash-exp', # <--- OFTEN FREE & UNLIMITED
+                prompt=f"{prompt}, detailed",
+                config=types.GenerateImagesConfig(number_of_images=1)
+            )
+            for img in response.generated_images:
+                b64 = base64.b64encode(img.image.image_bytes).decode('utf-8')
+                return f"![Google Flash Art](data:image/png;base64,{b64})"
+        except Exception as e:
+            print(f"⚠️ Google Flash Failed: {e}")
+
+    # ATTEMPT 3: Pollinations Turbo (Guaranteed Fallback)
+    try:
+        encoded = urllib.parse.quote(f"{prompt}, realistic, 8k")
+        seed = random.randint(1, 1000000)
+        url = f"https://image.pollinations.ai/prompt/{encoded}?seed={seed}&nologo=true&width=1024&height=1024"
+        return f"![Turbo Art]({url})"
+    except:
+        return "❌ System Error: All image cores failed."
+
+# --- CHAT ENDPOINT ---
 @app.post("/api/chat")
 async def chat(request: Request):
     user = request.session.get("user")
@@ -93,47 +140,21 @@ async def chat(request: Request):
     model_alias = data.get("model", "NEXUS-70B (Versatile)")
     history = data.get("history", [])
 
-    # 1. IMAGE DETECTION & GENERATION (GOOGLE IMAGEN)
-    img_triggers = ["draw", "create a picture", "generate image", "photo of", "image of", "paint", "make a picture"]
+    # 1. IMAGE TRIGGER
+    img_triggers = ["draw", "create a picture", "generate image", "photo of", "image of", "paint"]
     lower_msg = msg.lower()
     
     if any(t in lower_msg for t in img_triggers):
-        if not GOOGLE_API_KEY:
-            return JSONResponse({"response": "❌ **System Error**: Google API Key missing in server."})
-            
-        try:
-            client = get_google_client()
-            # Clean prompt
-            prompt_clean = msg
-            for t in img_triggers: prompt_clean = prompt_clean.replace(t, "")
-            
-            # CALL GOOGLE IMAGEN 3
-            response = client.models.generate_images(
-                model='imagen-3.0-generate-002',
-                prompt=f"{prompt_clean}, highly detailed, photorealistic, 4k",
-                config=types.GenerateImagesConfig(
-                    number_of_images=1,
-                    aspect_ratio="1:1" # You can change to "16:9" for wide
-                )
-            )
-            
-            # Process Result
-            for generated_image in response.generated_images:
-                # Convert raw bytes to base64 for browser display
-                b64_data = base64.b64encode(generated_image.image.image_bytes).decode('utf-8')
-                img_src = f"data:image/png;base64,{b64_data}"
-                
-                # Return as Markdown Image
-                final_resp = f"![Generated Art]({img_src})"
-                log_secretly(user, msg, "[IMAGE GENERATED]")
-                return JSONResponse({"response": final_resp})
+        prompt_clean = msg
+        for t in img_triggers: prompt_clean = prompt_clean.replace(t, "")
+        
+        # Call the new Smart Generator
+        final_resp = await generate_image_smart(prompt_clean)
+        log_secretly(user, msg, "[IMAGE GENERATED]")
+        return JSONResponse({"response": final_resp})
 
-        except Exception as e:
-            return JSONResponse({"response": f"❌ **Image Error**: {str(e)}"})
-
-    # 2. TEXT CHAT (GROQ)
+    # 2. TEXT CHAT
     model_config = MODELS.get(model_alias, MODELS["NEXUS-70B (Versatile)"])
-    
     sys_prompt = PROMPTS.get(mode, PROMPTS["normal"])
     messages = [{"role": "system", "content": sys_prompt}] + history + [{"role": "user", "content": msg}]
 
@@ -144,9 +165,9 @@ async def chat(request: Request):
         log_secretly(user, msg, resp)
         return JSONResponse({"response": resp})
     except Exception as e:
-        return JSONResponse({"response": f"❌ **Error**: {str(e)}"})
+        return JSONResponse({"response": f"❌ Error: {str(e)}"})
 
-# --- VISION & TTS ---
+# --- VISION ---
 @app.post("/api/vision")
 async def vision_analysis(request: Request, file: UploadFile = File(...), prompt: str = Form(...)):
     user = request.session.get("user")
