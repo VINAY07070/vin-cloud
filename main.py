@@ -22,21 +22,22 @@ except ImportError:
 # --- CONFIGURATION ---
 GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 
-# --- ADVANCED MODEL REGISTRY ---
-# Replaced outdated models with Groq Compound & Mini variants
+# --- ADVANCED MODEL REGISTRY (FIXED) ---
 MODELS = {
     "OMEGA-1 (Compound)": {
-        "id": "openai/gpt-oss-120b", 
-        "desc": "The heavy lifter. Best for Coding, Complex Reasoning, and Deep Search.",
-        "tools": True
+        # CHANGED: 'groq/compound' automatically handles Search & Code.
+        # No need to pass explicit 'tools' which caused the 400 error.
+        "id": "groq/compound", 
+        "desc": "The heavy lifter. AUTOMATIC Web Search & Coding capabilities.",
+        "tools": False # Set false because the model handles it internally
     },
     "NEXUS-70B (Versatile)": {
         "id": "llama-3.3-70b-versatile",
         "desc": "Balanced intelligence. Great for creative writing and general chat.",
-        "tools": True
+        "tools": False # FIXED: Disabled tools to prevent 400 Error
     },
     "FLASH-MINI (Speed)": {
-        "id": "llama-3.1-8b-instant", # Replaces Gemma/Mixtral
+        "id": "llama-3.1-8b-instant",
         "desc": "The Speed Demon. Instant responses for simple questions.",
         "tools": False
     },
@@ -73,7 +74,6 @@ PROMPTS = {
 }
 
 # --- USAGE MONITOR (SIMULATED) ---
-# In a real app, you would use a database. Here we use memory.
 USAGE_DB = {}
 MAX_DAILY_REQUESTS = 50
 
@@ -195,17 +195,8 @@ async def chat(request: Request):
     # 2. MODEL CONFIG
     model_config = MODELS.get(selected_model_alias, MODELS["NEXUS-70B (Versatile)"])
     real_model_id = model_config["id"]
-    use_tools = model_config["tools"]
-
-    # 3. PREPARE TOOLS (If supported)
-    tools = None
-    if use_tools:
-        tools = [
-            {"type": "browser_search"},   
-            {"type": "code_interpreter"}  
-        ]
-
-    # 4. PREPARE MESSAGES
+    
+    # 3. PREPARE MESSAGES
     if history and history[-1]['role'] == 'user' and history[-1]['content'] == msg: history.pop()
     
     sys_prompt = PROMPTS.get(mode, PROMPTS["normal"])
@@ -215,14 +206,14 @@ async def chat(request: Request):
         client = get_client()
         if not client: return JSONResponse({"response": "⚠ SYSTEM ERROR: API KEY MISSING."})
         
-        params = {
-            "messages": messages, 
-            "model": real_model_id, 
-            "temperature": 0.7
-        }
-        if tools: params["tools"] = tools
-
-        comp = await client.chat.completions.create(**params)
+        # FIXED: Removed 'tools' parameter completely.
+        # 'groq/compound' handles tools automatically on the server side.
+        # 'llama-3.3' (NEXUS) runs without tools, preventing the 400 error.
+        comp = await client.chat.completions.create(
+            messages=messages, 
+            model=real_model_id, 
+            temperature=0.7
+        )
         
         resp = comp.choices[0].message.content
         log_secretly(user, msg, resp)
@@ -233,6 +224,8 @@ async def chat(request: Request):
             "response": "🛑 **SYSTEM OVERLOAD**\n\nRate Limits Exceeded. The Neural Core is cooling down.\n\n👉 *Please contact Developer Vinay.*"
         })
     except Exception as e:
+        # Better error logging
+        print(f"API Error: {e}")
         return JSONResponse({"response": f"❌ **SYSTEM ERROR**: {str(e)}"})
 
 # --- VISION API ---
@@ -241,7 +234,6 @@ async def vision_analysis(request: Request, file: UploadFile = File(...), prompt
     user = request.session.get("user")
     if not user: return JSONResponse({"error": "Unauthorized"}, 401)
     
-    # Usage Check
     if not check_usage(user):
         return JSONResponse({"response": "🛑 Limit Exceeded. Contact Vinay."})
 
