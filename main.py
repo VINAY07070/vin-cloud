@@ -80,53 +80,41 @@ async def os_interface(request: Request):
     if not request.session.get("user"): return RedirectResponse("/", status_code=303)
     return templates.TemplateResponse("index.html", {"request": request, "user": request.session.get("user"), "models": MODELS})
 
-# --- SMART IMAGE GENERATOR ---
-async def generate_image_smart(prompt):
+# --- FAIL-SAFE IMAGE GENERATOR ---
+async def generate_image_safe(prompt):
     """
-    Tries 3 different engines in order:
-    1. Google Imagen 001 (High Quality Free)
-    2. Google Flash 2.0 (Backup Free)
-    3. Pollinations Turbo (Ultimate Fallback)
+    1. Tries Google (only if key exists).
+    2. If Google fails (404/Auth), IMMEDIATELY falls back to a simple Pollinations URL.
     """
     
-    # ATTEMPT 1: Google Imagen (Standard Free Model)
+    # ATTEMPT 1: Google Imagen (Only if API Key is set)
     if GOOGLE_API_KEY:
         try:
             client = get_google_client()
+            # We strictly try the '001' model. If it fails, we catch it immediately.
             response = client.models.generate_images(
-                model='imagen-3.0-generate-001', # <--- CHANGED FROM 002 TO 001 (FREE)
-                prompt=f"{prompt}, highly detailed, photorealistic, 4k",
-                config=types.GenerateImagesConfig(number_of_images=1, aspect_ratio="1:1")
-            )
-            for img in response.generated_images:
-                b64 = base64.b64encode(img.image.image_bytes).decode('utf-8')
-                return f"![Google Art](data:image/png;base64,{b64})"
-        except Exception as e:
-            print(f"⚠️ Google Imagen 001 Failed: {e}")
-
-    # ATTEMPT 2: Google Flash (Experimental Free Model)
-    if GOOGLE_API_KEY:
-        try:
-            client = get_google_client()
-            response = client.models.generate_images(
-                model='gemini-2.0-flash-exp', # <--- OFTEN FREE & UNLIMITED
-                prompt=f"{prompt}, detailed",
+                model='imagen-3.0-generate-001',
+                prompt=f"{prompt}, high quality",
                 config=types.GenerateImagesConfig(number_of_images=1)
             )
             for img in response.generated_images:
+                # Successfully got an image from Google
                 b64 = base64.b64encode(img.image.image_bytes).decode('utf-8')
-                return f"![Google Flash Art](data:image/png;base64,{b64})"
+                return f"![Google Art](data:image/png;base64,{b64})"
         except Exception as e:
-            print(f"⚠️ Google Flash Failed: {e}")
+            # Log error internally, but do NOT crash. Proceed to fallback.
+            print(f"Google Image Gen Failed (Switching to Fallback): {e}")
 
-    # ATTEMPT 3: Pollinations Turbo (Guaranteed Fallback)
+    # ATTEMPT 2: Pollinations (The "Safe Mode")
+    # We remove 'nologo' and 'high res' params to ensure it loads fast and doesn't timeout.
     try:
-        encoded = urllib.parse.quote(f"{prompt}, realistic, 8k")
+        encoded = urllib.parse.quote(prompt)
         seed = random.randint(1, 1000000)
-        url = f"https://image.pollinations.ai/prompt/{encoded}?seed={seed}&nologo=true&width=1024&height=1024"
-        return f"![Turbo Art]({url})"
+        # Simple URL - most compatible format
+        url = f"https://image.pollinations.ai/prompt/{encoded}?seed={seed}"
+        return f"![Generated Art]({url})"
     except:
-        return "❌ System Error: All image cores failed."
+        return "❌ System Error: Unable to generate image."
 
 # --- CHAT ENDPOINT ---
 @app.post("/api/chat")
@@ -148,8 +136,8 @@ async def chat(request: Request):
         prompt_clean = msg
         for t in img_triggers: prompt_clean = prompt_clean.replace(t, "")
         
-        # Call the new Smart Generator
-        final_resp = await generate_image_smart(prompt_clean)
+        # Call the Safe Generator
+        final_resp = await generate_image_safe(prompt_clean)
         log_secretly(user, msg, "[IMAGE GENERATED]")
         return JSONResponse({"response": final_resp})
 
