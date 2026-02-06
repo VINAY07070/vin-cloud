@@ -4,6 +4,5 @@ python-multipart
 jinja2
 groq
 aiofiles
-itsdangerous
 edge-tts
-werkzeug
+google-genai
