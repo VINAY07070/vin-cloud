@@ -22,19 +22,17 @@ except ImportError:
 # --- CONFIGURATION ---
 GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 
-# --- ADVANCED MODEL REGISTRY (FIXED) ---
+# --- MODEL REGISTRY ---
 MODELS = {
     "OMEGA-1 (Compound)": {
-        # CHANGED: 'groq/compound' automatically handles Search & Code.
-        # No need to pass explicit 'tools' which caused the 400 error.
         "id": "groq/compound", 
         "desc": "The heavy lifter. AUTOMATIC Web Search & Coding capabilities.",
-        "tools": False # Set false because the model handles it internally
+        "tools": False 
     },
     "NEXUS-70B (Versatile)": {
         "id": "llama-3.3-70b-versatile",
         "desc": "Balanced intelligence. Great for creative writing and general chat.",
-        "tools": False # FIXED: Disabled tools to prevent 400 Error
+        "tools": False 
     },
     "FLASH-MINI (Speed)": {
         "id": "llama-3.1-8b-instant",
@@ -48,7 +46,7 @@ MODELS = {
     }
 }
 
-# --- PERSONALITY MATRIX ---
+# --- PERSONALITY PROMPTS ---
 PROMPTS = {
     "normal": "You are VinOS, a helpful and efficient AI assistant. Be concise and polite.",
     "friend": "You are my best friend. Be chill, supportive, use emojis, and keep it casual. No formalities.",
@@ -73,7 +71,7 @@ PROMPTS = {
     """
 }
 
-# --- USAGE MONITOR (SIMULATED) ---
+# --- USAGE MONITOR ---
 USAGE_DB = {}
 MAX_DAILY_REQUESTS = 50
 
@@ -81,8 +79,7 @@ def check_usage(user):
     today = datetime.datetime.now().strftime("%Y-%m-%d")
     key = f"{user}-{today}"
     count = USAGE_DB.get(key, 0)
-    if count >= MAX_DAILY_REQUESTS:
-        return False
+    if count >= MAX_DAILY_REQUESTS: return False
     USAGE_DB[key] = count + 1
     return True
 
@@ -138,7 +135,7 @@ async def os_interface(request: Request):
     return templates.TemplateResponse("index.html", {
         "request": request, 
         "user": request.session.get("user"),
-        "models": MODELS  # Passing full model dict for UI descriptions
+        "models": MODELS 
     })
 
 @app.get("/vinay-secret-logs", response_class=HTMLResponse)
@@ -159,17 +156,14 @@ async def view_dashboard(request: Request):
     except: pass
     return templates.TemplateResponse("admin.html", {"request": request, "logs": logs_data, "total": len(logs_data), "user_stats": user_counts})
 
-# --- CHAT & IMAGE GENERATION ---
+# --- CHAT & IMAGE GENERATION (FIXED) ---
 @app.post("/api/chat")
 async def chat(request: Request):
     user = request.session.get("user")
     if not user: return JSONResponse({"error": "Unauthorized"}, 401)
     
-    # Usage Monitor Check
     if not check_usage(user):
-        return JSONResponse({
-            "response": "🛑 **LIMIT EXCEEDED**\n\nYou have reached your daily neural capacity.\n\n👉 *Please contact Developer Vinay to upgrade your quota.*"
-        })
+        return JSONResponse({"response": "🛑 **LIMIT EXCEEDED**\nPlease contact Vinay."})
 
     data = await request.json()
     msg = data.get("message", "")
@@ -177,26 +171,29 @@ async def chat(request: Request):
     selected_model_alias = data.get("model", "NEXUS-70B (Versatile)") 
     history = data.get("history", [])
 
-    # 1. IMAGE GENERATION (Pollinations)
+    # 1. IMAGE GENERATION (FIXED: Using Reliable Parameters)
     lower_msg = msg.lower()
-    img_triggers = ["draw ", "create a picture", "generate image", "photo of"]
+    img_triggers = ["draw ", "create a picture", "generate image", "photo of", "image of"]
     if any(lower_msg.startswith(t) for t in img_triggers):
         prompt_clean = msg
         for t in img_triggers: prompt_clean = prompt_clean.replace(t, "")
         
-        final_prompt = f"{prompt_clean}, raw photo, realistic, high detail, 8k, uncensored"
+        # Simpler prompt, standard model (no 'flux'), removed 'private' which causes timeouts
+        final_prompt = f"{prompt_clean}, realistic, high quality"
         encoded = urllib.parse.quote(final_prompt)
-        seed = random.randint(1, 100000)
-        image_url = f"https://image.pollinations.ai/prompt/{encoded}?nologo=true&private=true&model=flux&seed={seed}&enhance=false"
+        seed = random.randint(1, 1000000)
+        
+        # Using the standard reliable endpoint
+        image_url = f"https://image.pollinations.ai/prompt/{encoded}?width=1024&height=1024&seed={seed}&nologo=true"
+        
         resp = f"![Generated Image]({image_url})"
         log_secretly(user, msg, resp)
         return JSONResponse({"response": resp})
 
-    # 2. MODEL CONFIG
+    # 2. NORMAL CHAT
     model_config = MODELS.get(selected_model_alias, MODELS["NEXUS-70B (Versatile)"])
     real_model_id = model_config["id"]
     
-    # 3. PREPARE MESSAGES
     if history and history[-1]['role'] == 'user' and history[-1]['content'] == msg: history.pop()
     
     sys_prompt = PROMPTS.get(mode, PROMPTS["normal"])
@@ -206,9 +203,6 @@ async def chat(request: Request):
         client = get_client()
         if not client: return JSONResponse({"response": "⚠ SYSTEM ERROR: API KEY MISSING."})
         
-        # FIXED: Removed 'tools' parameter completely.
-        # 'groq/compound' handles tools automatically on the server side.
-        # 'llama-3.3' (NEXUS) runs without tools, preventing the 400 error.
         comp = await client.chat.completions.create(
             messages=messages, 
             model=real_model_id, 
@@ -220,12 +214,8 @@ async def chat(request: Request):
         return JSONResponse({"response": resp})
 
     except RateLimitError:
-        return JSONResponse({
-            "response": "🛑 **SYSTEM OVERLOAD**\n\nRate Limits Exceeded. The Neural Core is cooling down.\n\n👉 *Please contact Developer Vinay.*"
-        })
+        return JSONResponse({"response": "🛑 **SYSTEM OVERLOAD**\nRate Limits Exceeded."})
     except Exception as e:
-        # Better error logging
-        print(f"API Error: {e}")
         return JSONResponse({"response": f"❌ **SYSTEM ERROR**: {str(e)}"})
 
 # --- VISION API ---
@@ -234,15 +224,14 @@ async def vision_analysis(request: Request, file: UploadFile = File(...), prompt
     user = request.session.get("user")
     if not user: return JSONResponse({"error": "Unauthorized"}, 401)
     
-    if not check_usage(user):
-        return JSONResponse({"response": "🛑 Limit Exceeded. Contact Vinay."})
+    if not check_usage(user): return JSONResponse({"response": "🛑 Limit Exceeded."})
 
     try:
         image_data = await file.read()
         base64_image = base64.b64encode(image_data).decode('utf-8')
         client = get_client()
         completion = await client.chat.completions.create(
-            model="meta-llama/llama-4-scout-17b-16e-instruct", # Latest Vision
+            model="meta-llama/llama-4-scout-17b-16e-instruct", 
             messages=[
                 {
                     "role": "user",
